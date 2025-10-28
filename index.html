@@ -5,14 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Account Mu Hunter Panel</title>
 
-  <!-- Força dark antes de carregar CSS para evitar flash branco -->
   <script>document.documentElement.classList.add('dark');</script>
 
-  <!-- Tailwind CDN (ok para dev) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
 
-  <!-- Supabase JS v2 -->
   <script type="module" crossorigin src="https://esm.sh/@supabase/supabase-js@2"></script>
 
   <style>
@@ -32,7 +29,6 @@
     .saving { opacity: .55; pointer-events: none; transition: opacity .15s ease; }
     .tagbox { width: 60px; text-transform: uppercase; }
 
-    /* Header estilizado */
     .title-gradient {
       background: linear-gradient(90deg, #a78bfa, #60a5fa 35%, #34d399 70%, #f472b6);
       -webkit-background-clip: text;
@@ -44,7 +40,6 @@
       background-color: rgba(24,24,27,.5);
     }
 
-    /* Modal */
     .modal-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
                      background: rgba(0,0,0,.6); z-index: 50; }
     .modal { width: 100%; max-width: 420px; border-radius: 16px; background: #0a0a0a; border: 1px solid #27272a;
@@ -53,19 +48,49 @@
     .modal .content { padding: 16px; }
     .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
     .show { display: flex; }
-    .checkbox-lg {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-}
 
+    /* Checkbox estilo "computed" azul */
+    .cbfx {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgb(62, 100, 255);
+      border-radius: 3px;
+      background: rgba(0,0,0,0);
+      box-shadow: rgba(0,0,0,0.09) 0 5px 18px -12px;
+      box-sizing: border-box;
+      cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
+      transition: color .15s ease-in-out,
+                  background-color .15s ease-in-out,
+                  border-color .15s ease-in-out,
+                  box-shadow .15s ease-in-out,
+                  transform .12s ease-in-out;
+    }
+    .cbfx:hover { box-shadow: rgba(62,100,255,.35) 0 0 0 2px inset; }
+    .cbfx:active { transform: scale(0.95); }
+    .cbfx:checked { background-color: rgb(62,100,255); border-color: rgb(62,100,255); }
+    .cbfx:checked::after {
+      content: "";
+      position: relative;
+      display: block;
+      width: 12px;
+      height: 6px;
+      margin: 6px auto 0;
+      border: 2px solid #fff;
+      border-top: 0;
+      border-right: 0;
+      transform: rotate(-45deg);
+    }
+    .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(62,100,255,.35); }
   </style>
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
   <div id="app" class="max-w-7xl mx-auto p-4">
 
-    <!-- Header centralizado (sem botão de tema) -->
     <header class="mb-6">
       <div class="rounded-2xl glass border border-zinc-800 p-6 text-center shadow">
         <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
@@ -80,7 +105,6 @@
       </div>
     </header>
 
-    <!-- Auth -->
     <section id="authCard" class="max-w-md mx-auto mt-8 bg-zinc-900 border border-zinc-800 shadow rounded-2xl p-6">
       <h2 class="text-xl font-semibold mb-4">Entrar</h2>
       <div class="space-y-3">
@@ -97,9 +121,7 @@
       </div>
     </section>
 
-    <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-      <!-- Filtros -->
       <div class="grid md:grid-cols-4 gap-3 mb-4">
         <div class="col-span-2">
           <label class="text-sm text-zinc-300">Busca (username ou senha)</label>
@@ -117,7 +139,6 @@
         </div>
       </div>
 
-      <!-- Cards -->
       <div class="grid md:grid-cols-4 gap-3 mb-4">
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
           <div class="text-sm text-zinc-400">Total filtrado</div>
@@ -137,7 +158,6 @@
         </div>
       </div>
 
-      <!-- Tabela -->
       <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
         <table class="min-w-full text-sm">
           <thead class="bg-zinc-900 border-b border-zinc-800">
@@ -147,7 +167,7 @@
               <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
               <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
               <th class="text-left px-3 py-2 sortable" id="thFlag">Marcado/Tag <span class="hint" id="hintF">⇅</span></th>
-              <th class="text-center px-2 py-2 w-12">Rapelada</th>
+              <th class="text-center px-2 py-2 w-14 sortable" id="thOlhar">Olhar <span class="hint" id="hintOlhar">⇅</span></th>
               <th class="text-center px-2 py-2 w-12">S1</th>
               <th class="text-center px-2 py-2 w-12">S2</th>
               <th class="text-center px-2 py-2 w-12">S3</th>
@@ -175,7 +195,6 @@
     </section>
   </div>
 
-  <!-- Modal de confirmação de exclusão -->
   <div id="delModal" class="modal-overlay">
     <div class="modal">
       <header class="flex items-center justify-between">
@@ -193,16 +212,14 @@
   </div>
 
 <script type="module">
-  // ===== CONFIG =====
-  const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";     // << EDITAR
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";             // << EDITAR
+  const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";     // << SUBSTITUA
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";            // << SUBSTITUA
   const TABLE = "webzen_cache_raw";
 
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.supabase = supabase; // para testes no Console
+  window.supabase = supabase;
 
-  // ===== UI NODES =====
   const authCard = document.getElementById('authCard');
   const dashboard = document.getElementById('dashboard');
   const loginBtn = document.getElementById('loginBtn');
@@ -229,18 +246,18 @@
   const thWcoin = document.getElementById('thWcoin');
   const thOnline = document.getElementById('thOnline');
   const thFlag = document.getElementById('thFlag');
+  const thOlhar = document.getElementById('thOlhar');
   const hintW = document.getElementById('hintW');
   const hintO = document.getElementById('hintO');
   const hintF = document.getElementById('hintF');
+  const hintOlhar = document.getElementById('hintOlhar');
 
-  // THEME sempre dark
   localStorage.setItem('theme','dark');
 
   let page = 1;
   let sort = { field: 'inserted_at', asc: false };
   let sessionUser = null;
 
-  // ===== AUTH =====
   async function updateSession(){
     const { data: { session } } = await supabase.auth.getSession();
     const logged = !!session;
@@ -252,61 +269,37 @@
   }
 
   loginBtn.addEventListener('click', async ()=>{
-    authMsg.classList.add('hidden');
-    authMsg.textContent = '';
-
-    const e = email.value.trim();
-    const p = password.value;
-    if(!e || !p){
-      authMsg.textContent = 'Preencha email e senha.';
-      authMsg.classList.remove('hidden');
-      return;
-    }
-
+    authMsg.classList.add('hidden'); authMsg.textContent='';
+    const e = email.value.trim(); const p = password.value;
+    if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
     try {
       const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
-      if(error){
-        authMsg.textContent = error.message || 'Falha ao entrar.';
-        authMsg.classList.remove('hidden');
-        return;
-      }
+      if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
       await updateSession();
-    } catch (err) {
-      authMsg.textContent = String(err);
-      authMsg.classList.remove('hidden');
-    }
+    } catch(err){ authMsg.textContent = String(err); authMsg.classList.remove('hidden'); }
   });
 
-  logoutBtn.addEventListener('click', async ()=>{
-    await supabase.auth.signOut();
-    await updateSession();
-  });
-
+  logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
   await updateSession();
 
-  // ===== QUERIES =====
   function baseSelect(){
-    return supabase.from(TABLE).select(
-      // adiciona 'olhar' aqui
-      'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar'
-    );
+    return supabase.from(TABLE).select('id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar');
   }
-
   function applyFilters(q){
-    const s = search.value.trim();
-    const valid = validFilter.value;
+    const s = search.value.trim(); const valid = validFilter.value;
     if(s){ q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`); }
     if(valid === 'yes'){ q = q.eq('f3', 'valid'); }
     return q;
   }
-
   function applySort(q){
-    if(sort.field === 'wcoin_int'){
+    if (sort.field === 'wcoin_int'){
       q = q.order('wcoin_int', { ascending: sort.asc, nullsFirst: false });
-    } else if(sort.field === 'online'){
+    } else if (sort.field === 'online'){
       q = q.order('online', { ascending: !sort.asc });
-    } else if(sort.field === 'flag'){
+    } else if (sort.field === 'flag'){
       q = q.order('flag', { ascending: !sort.asc });
+    } else if (sort.field === 'olhar'){
+      q = q.order('olhar', { ascending: !sort.asc });
     } else {
       q = q.order('id', { ascending: false });
     }
@@ -314,85 +307,44 @@
   }
 
   async function loadCards(){
-    // total filtrado
-    let qCount = applyFilters(supabase.from(TABLE).select('*', { count: 'exact', head: true }));
-    const { count: totalCount } = await qCount;
-    cardTotal.textContent = totalCount || 0;
-
-    // online filtrado
-    let qOn = applyFilters(supabase.from(TABLE).select('*', { count: 'exact', head: true })).eq('online', true);
-    const { count: onCount } = await qOn;
-    cardOnline.textContent = onCount || 0;
-
-    // válidas filtradas
-    let qVal = applyFilters(supabase.from(TABLE).select('*', { count: 'exact', head: true })).eq('f3', 'valid');
-    const { count: valCount } = await qVal;
-    cardValid.textContent = valCount || 0;
-
-    // soma WCoin via RPC (respeita filtros)
-    const s = search.value.trim();
-    const onlyValid = (validFilter.value === 'yes');
+    let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
+    const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
+    let qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
+    const { count: onCount } = await qOn; cardOnline.textContent = onCount || 0;
+    let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
+    const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
+    const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
     const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
-    if(sumErr){ console.warn('RPC sum_wcoin_filtered:', sumErr); cardWSum.textContent = '–'; }
-    else { cardWSum.textContent = (sumData || 0).toLocaleString('pt-BR'); }
+    cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
   }
 
   async function loadPage(){
-    const limit = parseInt(limitSel.value, 10) || 50;
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-
+    const limit = parseInt(limitSel.value,10) || 50;
+    const from = (page-1)*limit; const to = from + limit - 1;
     await loadCards();
-
-    let q = baseSelect();
-    q = applyFilters(q);
-    q = applySort(q);
-    q = q.range(from, to);
-
+    let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
     const { data, error } = await q;
-    if(error){
-      console.error(error);
-      rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
-      return;
-    }
-    renderRows(data || []);
-    pageLbl.textContent = `Página ${page}`;
+    if(error){ rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`; return; }
+    renderRows(data || []); pageLbl.textContent = `Página ${page}`;
   }
 
-  // ===== Modal Excluir =====
   let pendingDeleteId = null;
   const delModal = document.getElementById('delModal');
   const closeModal = document.getElementById('closeModal');
   const cancelDel = document.getElementById('cancelDel');
   const confirmDel = document.getElementById('confirmDel');
-
-  function openDelModal(id){
-    pendingDeleteId = id;
-    delModal.classList.add('show');
-  }
-  function closeDelModal(){
-    delModal.classList.remove('show');
-    pendingDeleteId = null;
-  }
+  function openDelModal(id){ pendingDeleteId = id; delModal.classList.add('show'); }
+  function closeDelModal(){ delModal.classList.remove('show'); pendingDeleteId = null; }
   closeModal.addEventListener('click', closeDelModal);
   cancelDel.addEventListener('click', closeDelModal);
-
   confirmDel.addEventListener('click', async ()=>{
     if(!pendingDeleteId) return;
-    const id = pendingDeleteId;
-    const { error } = await supabase.from(TABLE).delete().eq('id', id);
-    if(error){
-      alert('Erro ao excluir: ' + error.message);
-      return;
-    }
-    const tr = rows.querySelector(`tr[data-id="${id}"]`);
-    if(tr) tr.remove();
-    closeDelModal();
-    await loadCards();
-    if(sort.field){ await loadPage(); }
+    const { error } = await supabase.from(TABLE).delete().eq('id', pendingDeleteId);
+    if(error){ alert('Erro ao excluir: '+error.message); return; }
+    const tr = rows.querySelector(`tr[data-id="${pendingDeleteId}"]`); if(tr) tr.remove();
+    closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
   });
 
-  // ===== Render =====
   function renderRows(items){
     rows.innerHTML = items.map(r => `
       <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
@@ -418,18 +370,17 @@
           </div>
         </td>
 
-        <!-- NOVA COLUNA: Olhar -->
         <td class="px-3 py-2 text-center">
-          <input type="checkbox" class="olharToggle checkbox-lg" ${r.olhar ? 'checked' : ''}/>
+          <input type="checkbox" class="olharToggle cbfx" ${r.olhar ? 'checked' : ''}/>
         </td>
 
         ${[1,2,3,4,5,6,7].map(n => `
           <td class="px-3 py-2 text-center">
-            <input type="checkbox" class="sChk checkbox-lg" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/>
+            <input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/>
           </td>
         `).join('')}
 
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap text-center">
           <button class="copyBtn px-2 py-1.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 transition">Copiar</button>
           <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
         </td>
@@ -437,180 +388,107 @@
     `).join('');
   }
 
-  // ===== Delegação de eventos no tbody (evita bug ao reordenar/refiltrar) =====
-
-  // Copiar user:pass
   rows.addEventListener('click', (ev)=>{
-    const btn = ev.target.closest('.copyBtn');
-    if(!btn) return;
-    const tr = btn.closest('tr');
-    const cells = tr.querySelectorAll('td');
-    const user = cells[0].innerText.trim();
-    const pass = cells[1].innerText.trim();
+    const btn = ev.target.closest('.copyBtn'); if(!btn) return;
+    const tr = btn.closest('tr'); const cells = tr.querySelectorAll('td');
+    const user = cells[0].innerText.trim(); const pass = cells[1].innerText.trim();
     navigator.clipboard.writeText(`${user}:${pass}`);
-    btn.textContent = 'Copiado ✓';
-    setTimeout(()=> btn.textContent = 'Copiar', 800);
+    btn.textContent = 'Copiado ✓'; setTimeout(()=> btn.textContent = 'Copiar', 800);
   });
-
-  // Abrir modal de exclusão
   rows.addEventListener('click', (ev)=>{
-    const btn = ev.target.closest('.delBtn');
-    if(!btn) return;
-    const tr = btn.closest('tr');
-    openDelModal(tr.getAttribute('data-id'));
+    const btn = ev.target.closest('.delBtn'); if(!btn) return;
+    const tr = btn.closest('tr'); openDelModal(tr.getAttribute('data-id'));
   });
-
-  // ONLINE toggle
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('onlineToggle')) return;
-    const tr = el.closest('tr'); tr.classList.add('saving');
-    const id = tr.getAttribute('data-id');
-    const prev = el.dataset.prev === 'true';
-    const next = el.checked;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const updated_by = user?.id || null;
+    const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+    const prev = el.dataset.prev === 'true'; const next = el.checked;
+    const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
     const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
-
-    tr.classList.remove('saving');
-    if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
-
-    if(prev !== next){
-      const current = parseInt(cardOnline.textContent || '0', 10) || 0;
-      cardOnline.textContent = current + (next ? 1 : -1);
-      el.dataset.prev = next ? 'true' : 'false';
-    }
+    tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
+    if(prev !== next){ const current = parseInt(cardOnline.textContent || '0', 10) || 0; cardOnline.textContent = current + (next ? 1 : -1); el.dataset.prev = next ? 'true':'false'; }
     if(sort.field === 'online'){ await loadPage(); }
   });
-
-  // FLAG toggle
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('flagToggle')) return;
-    const tr = el.closest('tr'); tr.classList.add('saving');
-    const id = tr.getAttribute('data-id');
-    const prev = el.dataset.prev === 'true';
-    const next = el.checked;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const updated_by = user?.id || null;
+    const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+    const prev = el.dataset.prev === 'true'; const next = el.checked;
+    const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
     const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
-
-    tr.classList.remove('saving');
-    if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
-
-    el.dataset.prev = next ? 'true' : 'false';
-    if(sort.field === 'flag'){ await loadPage(); }
+    tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
+    el.dataset.prev = next ? 'true':'false'; if(sort.field === 'flag'){ await loadPage(); }
   });
-
-  // OLHAR toggle (NOVO)
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('olharToggle')) return;
-    const tr = el.closest('tr'); tr.classList.add('saving');
-    const id = tr.getAttribute('data-id');
+    const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
     const next = el.checked;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const updated_by = user?.id || null;
+    const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
     const { error } = await supabase.from(TABLE).update({ olhar: next, updated_by }).eq('id', id);
-
-    tr.classList.remove('saving');
-    if(error){ el.checked = !next; alert('Erro ao salvar Olhar: '+error.message); return; }
+    tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Olhar: '+error.message); return; }
   });
-
-  // S1..S7 toggles
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('sChk')) return;
-    const tr = el.closest('tr'); tr.classList.add('saving');
-    const id = tr.getAttribute('data-id');
-    const key = 's' + el.getAttribute('data-s');
-    const val = el.checked;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const updated_by = user?.id || null;
+    const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+    const key = 's' + el.getAttribute('data-s'); const val = el.checked;
+    const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
     const update = {}; update[key] = val; update['updated_by'] = updated_by;
     const { error } = await supabase.from(TABLE).update(update).eq('id', id);
-
-    tr.classList.remove('saving');
-    if(error){ alert('Erro ao salvar '+key+': '+error.message); }
+    tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
   });
-
-  // TAG4 salva no blur/enter
   rows.addEventListener('blur', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('tagInput')) return;
-    const tr = el.closest('tr'); tr.classList.add('saving');
-    const id = tr.getAttribute('data-id');
-    const v = (el.value || '').toUpperCase().slice(0,4);
-    el.value = v;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    const updated_by = user?.id || null;
+    const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+    const v = (el.value || '').toUpperCase().slice(0,4); el.value = v;
+    const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
     const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
-
-    tr.classList.remove('saving');
-    if(error){ alert('Erro ao salvar TAG: '+error.message); }
+    tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
   }, true);
-
   rows.addEventListener('keydown', (ev)=>{
-    const el = ev.target;
-    if(!el.classList.contains('tagInput')) return;
-    if(ev.key !== 'Enter') return;
-    ev.preventDefault();
-    el.blur();
+    const el = ev.target; if(!el.classList.contains('tagInput')) return;
+    if(ev.key !== 'Enter') return; ev.preventDefault(); el.blur();
   });
 
-  // ===== ACTIONS =====
   applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
   prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
-  nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
+  nextBtn.addEventListener('click', ()=>{ page++; loadPage(); } });
   limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-  // Sort headers
   thWcoin.addEventListener('click', ()=>{
-    if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; }
-    else { sort.asc = !sort.asc; }
+    if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; } else { sort.asc = !sort.asc; }
     hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
-    hintO.textContent = '⇅';
-    hintF.textContent = '⇅';
+    hintO.textContent = '⇅'; hintF.textContent = '⇅'; hintOlhar.textContent = '⇅';
     page = 1; loadPage();
   });
-
   thOnline.addEventListener('click', ()=>{
-    if(sort.field !== 'online'){ sort = { field: 'online', asc: false }; }
-    else { sort.asc = !sort.asc; }
+    if(sort.field !== 'online'){ sort = { field: 'online', asc: false }; } else { sort.asc = !sort.asc; }
     hintO.textContent = sort.field==='online' ? (sort.asc?'↑':'↓') : '⇅';
-    hintW.textContent = '⇅';
-    hintF.textContent = '⇅';
+    hintW.textContent = '⇅'; hintF.textContent = '⇅'; hintOlhar.textContent = '⇅';
     page = 1; loadPage();
   });
-
   thFlag.addEventListener('click', ()=>{
-    if(sort.field !== 'flag'){ sort = { field: 'flag', asc: false }; }
-    else { sort.asc = !sort.asc; }
+    if(sort.field !== 'flag'){ sort = { field: 'flag', asc: false }; } else { sort.asc = !sort.asc; }
     hintF.textContent = sort.field==='flag' ? (sort.asc?'↑':'↓') : '⇅';
-    hintW.textContent = '⇅';
-    hintO.textContent = '⇅';
+    hintW.textContent = '⇅'; hintO.textContent = '⇅'; hintOlhar.textContent = '⇅';
+    page = 1; loadPage();
+  });
+  thOlhar.addEventListener('click', ()=>{
+    if(sort.field !== 'olhar'){ sort = { field: 'olhar', asc: false }; } else { sort.asc = !sort.asc; }
+    hintOlhar.textContent = sort.field==='olhar' ? (sort.asc?'↑':'↓') : '⇅';
+    hintW.textContent = '⇅'; hintO.textContent = '⇅'; hintF.textContent = '⇅';
     page = 1; loadPage();
   });
 
-  // Realtime
   try {
     const channel = supabase.channel('realtime:webzen_cache_raw')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: TABLE }, async () => {
-        if(page === 1){ await loadPage(); }
-        await loadCards();
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: TABLE }, async () => {
-        await loadCards();
-        if(sort.field === 'online' || sort.field === 'flag'){ await loadPage(); }
-      })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, async ()=>{ await loadCards(); if(['online','flag','olhar'].includes(sort.field)){ await loadPage(); } })
       .subscribe();
   } catch(err){ console.warn('Realtime indisponível:', err); }
-
 </script>
 
 </body>
