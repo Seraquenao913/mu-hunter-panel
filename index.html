@@ -53,6 +53,12 @@
     .modal .content { padding: 16px; }
     .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
     .show { display: flex; }
+    .checkbox-lg {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
   </style>
 </head>
 
@@ -141,15 +147,15 @@
               <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
               <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
               <th class="text-left px-3 py-2 sortable" id="thFlag">Marcado/Tag <span class="hint" id="hintF">⇅</span></th>
-              <th class="text-left px-3 py-2 text-center">Olhar</th> <!-- NOVA COLUNA -->
-              <th class="text-left px-3 py-2 text-center">S1</th>
-              <th class="text-left px-3 py-2 text-center">S2</th>
-              <th class="text-left px-3 py-2 text-center">S3</th>
-              <th class="text-left px-3 py-2 text-center">S4</th>
-              <th class="text-left px-3 py-2 text-center">S5</th>
-              <th class="text-left px-3 py-2 text-center">S6</th>
-              <th class="text-left px-3 py-2 text-center">S7</th>
-              <th class="text-left px-3 py-2">Ações</th>
+              <th class="text-center px-2 py-2 w-12">Rapelada</th>
+              <th class="text-center px-2 py-2 w-12">S1</th>
+              <th class="text-center px-2 py-2 w-12">S2</th>
+              <th class="text-center px-2 py-2 w-12">S3</th>
+              <th class="text-center px-2 py-2 w-12">S4</th>
+              <th class="text-center px-2 py-2 w-12">S5</th>
+              <th class="text-center px-2 py-2 w-12">S6</th>
+              <th class="text-center px-2 py-2 w-12">S7</th>
+              <th class="text-center px-3 py-2">Ações</th>
             </tr>
           </thead>
           <tbody id="rows" class="divide-y divide-zinc-800 bg-zinc-950"></tbody>
@@ -414,12 +420,12 @@
 
         <!-- NOVA COLUNA: Olhar -->
         <td class="px-3 py-2 text-center">
-          <input type="checkbox" class="olharToggle" ${r.olhar ? 'checked' : ''}/>
+          <input type="checkbox" class="olharToggle checkbox-lg" ${r.olhar ? 'checked' : ''}/>
         </td>
 
         ${[1,2,3,4,5,6,7].map(n => `
           <td class="px-3 py-2 text-center">
-            <input type="checkbox" class="sChk" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/>
+            <input type="checkbox" class="sChk checkbox-lg" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/>
           </td>
         `).join('')}
 
