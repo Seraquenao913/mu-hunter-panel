@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -86,35 +85,41 @@
       transform: rotate(-45deg);
     }
     .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,70,70,.35); }
+
+    /* Botão estilizado (importar cache) */
+    .btn-outline {
+      border: 1px solid rgb(62,100,255);
+      color: rgb(62,100,255);
+      padding: 8px 14px;
+      border-radius: 12px;
+      transition: all .15s ease-in-out;
+    }
+    .btn-outline:hover { background: rgba(62,100,255,.1); }
   </style>
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
   <div id="app" class="max-w-7xl mx-auto p-4">
 
-    <!-- Header com menu à direita -->
     <header class="mb-6">
-      <div class="rounded-2xl glass border border-zinc-800 p-4 md:p-6 shadow flex items-center justify-between gap-4">
-        <div class="text-center md:text-left flex-1">
-          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
-            Account Mu Hunter Panel
-          </h1>
-          <p class="mt-1 text-sm text-zinc-400"></p>
-        </div>
+      <div class="rounded-2xl glass border border-zinc-800 p-6 shadow">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div class="text-center mx-auto md:mx-0">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
+              Account Mu Hunter Panel
+            </h1>
+            <p class="mt-2 text-sm text-zinc-400">gerencie status, tags e controles em tempo real</p>
+          </div>
 
-        <!-- Menu lateral à direita -->
-        <aside class="shrink-0 w-[260px]">
-          <div class="rounded-2xl bg-zinc-900/60 border border-zinc-800 p-3">
-            <h3 class="font-semibold mb-2 text-sm text-zinc-300">Ações</h3>
+          <!-- Menu lateral direito -->
+          <div class="flex items-center gap-3">
             <input id="fileInput" type="file" accept=".txt" class="hidden" />
-            <button id="uploadBtn" class="w-full py-2 rounded-xl bg-amber-600 text-white hover:bg-amber-500 transition">Adicionar cache.txt</button>
-            <p id="upMsg" class="mt-2 text-xs text-zinc-400"></p>
-            <hr class="my-3 border-zinc-800">
-            <button id="logoutBtn" class="w-full px-3 py-2 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">
+            <button id="importBtn" class="btn-outline">Importar cache.txt</button>
+            <button id="logoutBtn" class="px-3 py-1.5 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">
               Sair
             </button>
           </div>
-        </aside>
+        </div>
       </div>
     </header>
 
@@ -231,15 +236,16 @@
   </div>
 
 <script type="module">
+  // ===== CONFIG =====
   const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";     // << SUBSTITUA
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8"; // << SUBSTITUA
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";                      // << SUBSTITUA
   const TABLE = "webzen_cache_raw";
 
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.supabase = supabase;
+  window.supabase = supabase; // para console
 
-  // UI
+  // ===== UI NODES =====
   const authCard = document.getElementById('authCard');
   const dashboard = document.getElementById('dashboard');
   const loginBtn = document.getElementById('loginBtn');
@@ -247,9 +253,6 @@
   const email = document.getElementById('email');
   const password = document.getElementById('password');
   const authMsg = document.getElementById('authMsg');
-  const uploadBtn = document.getElementById('uploadBtn');
-  const fileInput = document.getElementById('fileInput');
-  const upMsg = document.getElementById('upMsg');
 
   const search = document.getElementById('search');
   const validFilter = document.getElementById('validFilter');
@@ -275,14 +278,20 @@
   const hintF = document.getElementById('hintF');
   const hintOlhar = document.getElementById('hintOlhar');
 
+  const importBtn = document.getElementById('importBtn');
+  const fileInput = document.getElementById('fileInput');
+
   localStorage.setItem('theme','dark');
 
   let page = 1;
   let sort = { field: 'inserted_at', asc: false };
+  let sessionUser = null;
 
+  // ===== AUTH =====
   async function updateSession(){
     const { data: { session } } = await supabase.auth.getSession();
     const logged = !!session;
+    sessionUser = session?.user || null;
     authCard.classList.toggle('hidden', logged);
     dashboard.classList.toggle('hidden', !logged);
     logoutBtn.classList.toggle('hidden', !logged);
@@ -303,8 +312,35 @@
   logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
   await updateSession();
 
+  // ===== IMPORTAR CACHE.TXT =====
+  importBtn.addEventListener('click', ()=> fileInput.click());
+  fileInput.addEventListener('change', async (ev)=>{
+    const file = ev.target.files?.[0];
+    if(!file) return;
+    if(file.size > 10 * 1024 * 1024){ // 10MB
+      alert("Arquivo muito grande. Máximo 10MB.");
+      return;
+    }
+    const text = await file.text();
+    importBtn.disabled = true; importBtn.textContent = "Importando...";
+    const { data, error } = await supabase.rpc('ingest_cache_txt', { _content: text });
+    importBtn.disabled = false; importBtn.textContent = "Importar cache.txt";
+    if(error){
+      alert('Falha ao importar: ' + (error.message || JSON.stringify(error)));
+      return;
+    }
+    alert(`Importado com sucesso:
+Novas: ${data?.inserted || 0}
+Ignoradas (duplicadas): ${data?.skipped || 0}`);
+    page = 1;
+    await loadPage();
+  });
+
+  // ===== QUERIES =====
   function baseSelect(){
-    return supabase.from(TABLE).select('id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar');
+    return supabase.from(TABLE).select(
+      'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar'
+    );
   }
   function applyFilters(q){
     const s = search.value.trim(); const valid = validFilter.value;
@@ -349,6 +385,7 @@
     renderRows(data || []); pageLbl.textContent = `Página ${page}`;
   }
 
+  // ===== Modal Excluir =====
   let pendingDeleteId = null;
   const delModal = document.getElementById('delModal');
   const closeModal = document.getElementById('closeModal');
@@ -366,6 +403,7 @@
     closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
   });
 
+  // ===== Render =====
   function renderRows(items){
     rows.innerHTML = items.map(r => `
       <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
@@ -409,7 +447,7 @@
     `).join('');
   }
 
-  // Delegação de eventos
+  // ===== Delegação de eventos =====
   rows.addEventListener('click', (ev)=>{
     const btn = ev.target.closest('.copyBtn'); if(!btn) return;
     const tr = btn.closest('tr'); const cells = tr.querySelectorAll('td');
@@ -421,6 +459,8 @@
     const btn = ev.target.closest('.delBtn'); if(!btn) return;
     const tr = btn.closest('tr'); openDelModal(tr.getAttribute('data-id'));
   });
+
+  // ONLINE toggle
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('onlineToggle')) return;
@@ -432,6 +472,8 @@
     if(prev !== next){ const current = parseInt(cardOnline.textContent || '0', 10) || 0; cardOnline.textContent = current + (next ? 1 : -1); el.dataset.prev = next ? 'true':'false'; }
     if(sort.field === 'online'){ await loadPage(); }
   });
+
+  // FLAG toggle
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('flagToggle')) return;
@@ -442,6 +484,8 @@
     tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
     el.dataset.prev = next ? 'true':'false'; if(sort.field === 'flag'){ await loadPage(); }
   });
+
+  // OLHAR / RAPELADO toggle
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('olharToggle')) return;
@@ -451,6 +495,8 @@
     const { error } = await supabase.from(TABLE).update({ olhar: next, updated_by }).eq('id', id);
     tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Rapelado: '+error.message); return; }
   });
+
+  // S1..S7 toggles
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('sChk')) return;
@@ -461,6 +507,8 @@
     const { error } = await supabase.from(TABLE).update(update).eq('id', id);
     tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
   });
+
+  // TAG4 salva no blur/enter
   rows.addEventListener('blur', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('tagInput')) return;
@@ -470,17 +518,19 @@
     const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
     tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
   }, true);
+
   rows.addEventListener('keydown', (ev)=>{
     const el = ev.target; if(!el.classList.contains('tagInput')) return;
     if(ev.key !== 'Enter') return; ev.preventDefault(); el.blur();
   });
 
-  // Paginação e sort
+  // ===== ACTIONS =====
   applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
   prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
   nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
   limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
+  // Sort headers
   thWcoin.addEventListener('click', ()=>{
     if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; } else { sort.asc = !sort.asc; }
     hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
@@ -506,57 +556,9 @@
     page = 1; loadPage();
   });
 
-  // ===== Upload cache.txt =====
-  uploadBtn.addEventListener('click', ()=> fileInput.click());
-  fileInput.addEventListener('change', async (e)=>{
-    const file = e.target.files[0];
-    if(!file){ return; }
-    upMsg.textContent = 'Lendo arquivo...';
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-    if(lines.length === 0){ upMsg.textContent='Nenhuma linha encontrada.'; return; }
-
-    // Heurística de parsing: tenta ; | , ou :
-    function parseLine(line){
-      const raw = line;
-      let parts = null;
-      if(line.includes(';')) parts = line.split(';');
-      else if(line.includes('|')) parts = line.split('|');
-      else if(line.includes(',')) parts = line.split(',');
-      else if(line.includes(':')) parts = line.split(':');
-      else parts = [line];
-
-      let f1=null,f2=null,f3=null,f5=null;
-      if(parts.length >= 5){
-        f1 = parts[0]?.trim() || null;
-        f2 = parts[1]?.trim() || null;
-        f3 = parts[2]?.trim() || null;
-        f5 = parts[4]?.trim() || null;
-      } else if(parts.length >= 2){
-        f1 = parts[0]?.trim() || null;
-        f2 = parts[1]?.trim() || null;
-      }
-      return { raw_line: raw, f1, f2, f3, f5 };
-    }
-
-    // Monta registros
-    const records = lines.map(parseLine);
-
-    // Insere em lotes com upsert por raw_line (requer UNIQUE em raw_line)
-    let ok=0, fail=0;
-    for(let i=0;i<records.length;i+=500){
-      const chunk = records.slice(i,i+500);
-      const { error } = await supabase.from(TABLE).upsert(chunk, { onConflict: 'raw_line', ignoreDuplicates: true });
-      if(error){ console.warn('Erro lote', i, error); fail += chunk.length; } else { ok += chunk.length; }
-      upMsg.textContent = `Processado ${Math.min(i+500, records.length)}/${records.length}...`;
-    }
-    upMsg.textContent = `Concluído. Inseridos/considerados: ${ok}.`;
-    await loadPage();
-  });
-
   // Realtime
   try {
-    supabase.channel('realtime:webzen_cache_raw')
+    const channel = supabase.channel('realtime:webzen_cache_raw')
       .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
       .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, async ()=>{ await loadCards(); if(['online','flag','olhar'].includes(sort.field)){ await loadPage(); } })
       .subscribe();
