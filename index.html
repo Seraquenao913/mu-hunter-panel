@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Account Mu Hunter Panel</title>
+
+  <!-- Força dark antes de carregar CSS para evitar flash branco -->
+  <script>document.documentElement.classList.add('dark');</script>
+
+  <!-- Tailwind CDN (ok para dev) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+
+  <!-- Supabase JS v2 -->
+  <script type="module" crossorigin src="https://esm.sh/@supabase/supabase-js@2"></script>
+
+  <style>
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+              background-color: #3f3f46; transition: .2s; border-radius: 9999px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+                     background-color: white; transition: .2s; border-radius: 9999px; }
+    input:checked + .slider { background-color: #10b981; }
+    input:focus + .slider { box-shadow: 0 0 1px #10b981; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable .hint { opacity: .6; font-size: 12px; margin-left: 4px; }
+
+    .saving { opacity: .55; pointer-events: none; transition: opacity .15s ease; }
+    .tagbox { width: 60px; text-transform: uppercase; }
+
+    /* Header estilizado */
+    .title-gradient {
+      background: linear-gradient(90deg, #a78bfa, #60a5fa 35%, #34d399 70%, #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .glass {
+      backdrop-filter: saturate(180%) blur(6px);
+      background-color: rgba(24,24,27,.5);
+    }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+                     background: rgba(0,0,0,.6); z-index: 50; }
+    .modal { width: 100%; max-width: 420px; border-radius: 16px; background: #0a0a0a; border: 1px solid #27272a;
+             box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    .modal header { padding: 14px 16px; border-bottom: 1px solid #27272a;}
+    .modal .content { padding: 16px; }
+    .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
+    .show { display: flex; }
+  </style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <div id="app" class="max-w-7xl mx-auto p-4">
+
+    <!-- Header centralizado (sem botão de tema) -->
+    <header class="mb-6">
+      <div class="rounded-2xl glass border border-zinc-800 p-6 text-center shadow">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
+          Account Mu Hunter Panel
+        </h1>
+        <p class="mt-2 text-sm text-zinc-400">gerencie status, tags e controles em tempo real</p>
+        <div class="mt-4 flex items-center justify-center">
+          <button id="logoutBtn" class="px-3 py-1.5 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">
+            Sair
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Auth -->
+    <section id="authCard" class="max-w-md mx-auto mt-8 bg-zinc-900 border border-zinc-800 shadow rounded-2xl p-6">
+      <h2 class="text-xl font-semibold mb-4">Entrar</h2>
+      <div class="space-y-3">
+        <label class="block">
+          <span class="text-sm text-zinc-300">E-mail</span>
+          <input id="email" type="email" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700" />
+        </label>
+        <label class="block">
+          <span class="text-sm text-zinc-300">Senha</span>
+          <input id="password" type="password" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700" />
+        </label>
+        <button id="loginBtn" class="w-full py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">Entrar</button>
+        <p id="authMsg" class="text-sm text-red-400 hidden"></p>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="hidden">
+      <!-- Filtros -->
+      <div class="grid md:grid-cols-4 gap-3 mb-4">
+        <div class="col-span-2">
+          <label class="text-sm text-zinc-300">Busca (username ou senha)</label>
+          <input id="search" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700" placeholder="ex: andrefirme" />
+        </div>
+        <div>
+          <label class="text-sm text-zinc-300">Apenas Válidas (f3='valid')</label>
+          <select id="validFilter" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700">
+            <option value="">Não</option>
+            <option value="yes">Sim</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button id="applyBtn" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">Aplicar</button>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="grid md:grid-cols-4 gap-3 mb-4">
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Total filtrado</div>
+          <div id="cardTotal" class="text-2xl font-bold">0</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Online (ligado)</div>
+          <div id="cardOnline" class="text-2xl font-bold">0</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Válidas</div>
+          <div id="cardValid" class="text-2xl font-bold">0</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Soma WCoin</div>
+          <div id="cardWSum" class="text-2xl font-bold">0</div>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
+        <table class="min-w-full text-sm">
+          <thead class="bg-zinc-900 border-b border-zinc-800">
+            <tr>
+              <th class="text-left px-3 py-2">Usuário</th>
+              <th class="text-left px-3 py-2">Senha</th>
+              <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
+              <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
+              <th class="text-left px-3 py-2 sortable" id="thFlag">Pegar Itens <span class="hint" id="hintF">⇅</span></th>
+              <th class="text-left px-3 py-2 text-center">S1</th>
+              <th class="text-left px-3 py-2 text-center">S2</th>
+              <th class="text-left px-3 py-2 text-center">S3</th>
+              <th class="text-left px-3 py-2 text-center">S4</th>
+              <th class="text-left px-3 py-2 text-center">S5</th>
+              <th class="text-left px-3 py-2 text-center">S6</th>
+              <th class="text-left px-3 py-2 text-center">S7</th>
+              <th class="text-left px-3 py-2">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-zinc-800 bg-zinc-950"></tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center gap-2 mt-4">
+        <button id="prevBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">◀</button>
+        <span id="pageLbl" class="text-sm text-zinc-400">Página 1</span>
+        <button id="nextBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">▶</button>
+        <select id="limitSel" class="ml-4 px-2 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">
+          <option>25</option>
+          <option selected>50</option>
+          <option>100</option>
+        </select>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal de confirmação de exclusão -->
+  <div id="delModal" class="modal-overlay">
+    <div class="modal">
+      <header class="flex items-center justify-between">
+        <h3 class="font-semibold">Excluir registro</h3>
+        <button id="closeModal" class="text-zinc-400 hover:text-zinc-200">✕</button>
+      </header>
+      <div class="content">
+        <p class="text-zinc-300">Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="actions">
+        <button id="cancelDel" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700">Cancelar</button>
+        <button id="confirmDel" class="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  // ===== CONFIG =====
+  const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";     // << EDITAR
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";             // << EDITAR
+  const TABLE = "webzen_cache_raw";
+
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabase = supabase; // para testes no Console
+
+  // ===== UI NODES =====
+  const authCard = document.getElementById('authCard');
+  const dashboard = document.getElementById('dashboard');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  const authMsg = document.getElementById('authMsg');
+
+  const search = document.getElementById('search');
+  const validFilter = document.getElementById('validFilter');
+  const applyBtn = document.getElementById('applyBtn');
+
+  const rows = document.getElementById('rows');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const pageLbl = document.getElementById('pageLbl');
+  const limitSel = document.getElementById('limitSel');
+
+  const cardTotal = document.getElementById('cardTotal');
+  const cardOnline = document.getElementById('cardOnline');
+  const cardValid = document.getElementById('cardValid');
+  const cardWSum = document.getElementById('cardWSum');
+
+  const thWcoin = document.getElementById('thWcoin');
+  const thOnline = document.getElementById('thOnline');
+  const thFlag = document.getElementById('thFlag');
+  const hintW = document.getElementById('hintW');
+  const hintO = document.getElementById('hintO');
+  const hintF = document.getElementById('hintF');
+
+  // ===== THEME sempre dark =====
+  localStorage.setItem('theme','dark');
+
+  let page = 1;
+  let sort = { field: 'inserted_at', asc: false };
+  let sessionUser = null;
+
+  // ===== AUTH =====
+  async function updateSession(){
+    const { data: { session } } = await supabase.auth.getSession();
+    const logged = !!session;
+    sessionUser = session?.user || null;
+    authCard.classList.toggle('hidden', logged);
+    dashboard.classList.toggle('hidden', !logged);
+    logoutBtn.classList.toggle('hidden', !logged);
+    if(logged){ await loadPage(); }
+  }
+
+  loginBtn.addEventListener('click', async ()=>{
+    authMsg.classList.add('hidden');
+    authMsg.textContent = '';
+
+    const e = email.value.trim();
+    const p = password.value;
+    if(!e || !p){
+      authMsg.textContent = 'Preencha email e senha.';
+      authMsg.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
+      if(error){
+        authMsg.textContent = error.message || 'Falha ao entrar.';
+        authMsg.classList.remove('hidden');
+        return;
+      }
+      await updateSession();
+    } catch (err) {
+      authMsg.textContent = String(err);
+      authMsg.classList.remove('hidden');
+    }
+  });
+
+  logoutBtn.addEventListener('click', async ()=>{
+    await supabase.auth.signOut();
+    await updateSession();
+  });
+
+  await updateSession();
+
+  // ===== QUERIES =====
+  function baseSelect(){
+    return supabase.from(TABLE).select(
+      'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4'
+    );
+  }
+
+  function applyFilters(q){
+    const s = search.value.trim();
+    const valid = validFilter.value;
+    if(s){ q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`); }
+    if(valid === 'yes'){ q = q.eq('f3', 'valid'); }
+    return q;
+  }
+
+  function applySort(q){
+    if(sort.field === 'wcoin_int'){
+      q = q.order('wcoin_int', { ascending: sort.asc, nullsFirst: false });
+    } else if(sort.field === 'online'){
+      q = q.order('online', { ascending: !sort.asc });
+    } else if(sort.field === 'flag'){
+      q = q.order('flag', { ascending: !sort.asc });
+    } else {
+      q = q.order('id', { ascending: false });
+    }
+    return q;
+  }
+
+  async function loadCards(){
+    // total filtrado
+    let qCount = applyFilters(supabase.from(TABLE).select('*', { count: 'exact', head: true }));
+    const { count: totalCount } = await qCount;
+    cardTotal.textContent = totalCount || 0;
+
+    // online filtrado
+    let qOn = applyFilters(supabase.from(TABLE).select('*', { count: 'exact', head: true })).eq('online', true);
+    const { count: onCount } = await qOn;
+    cardOnline.textContent = onCount || 0;
+
+    // válidas filtradas
+    let qVal = applyFilters(supabase.from(TABLE).select('*', { count: 'exact', head: true })).eq('f3', 'valid');
+    const { count: valCount } = await qVal;
+    cardValid.textContent = valCount || 0;
+
+    // soma WCoin via RPC (respeita filtros)
+    const s = search.value.trim();
+    const onlyValid = (validFilter.value === 'yes');
+    const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
+    if(sumErr){ console.warn('RPC sum_wcoin_filtered:', sumErr); cardWSum.textContent = '–'; }
+    else { cardWSum.textContent = (sumData || 0).toLocaleString('pt-BR'); }
+  }
+
+  async function loadPage(){
+    const limit = parseInt(limitSel.value, 10) || 50;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    await loadCards();
+
+    let q = baseSelect();
+    q = applyFilters(q);
+    q = applySort(q);
+    q = q.range(from, to);
+
+    const { data, error } = await q;
+    if(error){
+      console.error(error);
+      rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
+      return;
+    }
+    renderRows(data || []);
+    pageLbl.textContent = `Página ${page}`;
+  }
+
+  // ===== RENDER =====
+  let pendingDeleteId = null;
+  const delModal = document.getElementById('delModal');
+  const closeModal = document.getElementById('closeModal');
+  const cancelDel = document.getElementById('cancelDel');
+  const confirmDel = document.getElementById('confirmDel');
+
+  function openDelModal(id){
+    pendingDeleteId = id;
+    delModal.classList.add('show');
+  }
+  function closeDelModal(){
+    delModal.classList.remove('show');
+    pendingDeleteId = null;
+  }
+  closeModal.addEventListener('click', closeDelModal);
+  cancelDel.addEventListener('click', closeDelModal);
+
+  confirmDel.addEventListener('click', async ()=>{
+    if(!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    // deleta no banco
+    const { error } = await supabase.from(TABLE).delete().eq('id', id);
+    if(error){
+      alert('Erro ao excluir: ' + error.message);
+      return;
+    }
+    // remove da UI
+    const tr = rows.querySelector(`tr[data-id="${id}"]`);
+    if(tr) tr.remove();
+    closeDelModal();
+    await loadCards();
+    if(sort.field){ await loadPage(); }
+  });
+
+  function renderRows(items){
+    rows.innerHTML = items.map(r => `
+      <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
+        <td class="px-3 py-2 whitespace-nowrap font-medium">${r.f1 ?? ''}</td>
+        <td class="px-3 py-2 whitespace-nowrap">${r.f2 ?? ''}</td>
+        <td class="px-3 py-2 whitespace-nowrap">${r.wcoin_int ?? 0}</td>
+
+        <td class="px-3 py-2 whitespace-nowrap">
+          <label class="switch">
+            <input type="checkbox" class="onlineToggle" data-prev="${r.online ? 'true' : 'false'}" ${r.online ? 'checked' : ''}>
+            <span class="slider"></span>
+          </label>
+        </td>
+
+        <td class="px-3 py-2 whitespace-nowrap">
+          <div class="flex items-center gap-2">
+            <label class="switch">
+              <input type="checkbox" class="flagToggle" data-prev="${r.flag ? 'true' : 'false'}" ${r.flag ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+            <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700"
+                   maxlength="4" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
+          </div>
+        </td>
+
+        ${[1,2,3,4,5,6,7].map(n => `
+          <td class="px-3 py-2 text-center">
+            <input type="checkbox" class="sChk" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/>
+          </td>
+        `).join('')}
+
+        <td class="px-3 py-2">
+          <button class="copyBtn px-2 py-1.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 transition">Copiar</button>
+          <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
+        </td>
+      </tr>
+    `).join('');
+
+    // ONLINE: salva na hora + atualiza card
+    document.querySelectorAll('.onlineToggle').forEach(el=>{
+      el.addEventListener('change', async (ev)=>{
+        const tr = ev.target.closest('tr'); tr.classList.add('saving');
+        const id = tr.getAttribute('data-id');
+        const prev = ev.target.dataset.prev === 'true';
+        const next = ev.target.checked;
+        const { data: { user } } = await supabase.auth.getUser();
+        const updated_by = user?.id || null;
+        const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
+        tr.classList.remove('saving');
+        if(error){ ev.target.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
+        if(prev !== next){
+          const current = parseInt(cardOnline.textContent || '0', 10) || 0;
+          cardOnline.textContent = current + (next ? 1 : -1);
+          ev.target.dataset.prev = next ? 'true' : 'false';
+        }
+        if(sort.field === 'online'){ await loadPage(); }
+      });
+    });
+
+    // FLAG: salva na hora + reordena se necessário
+    document.querySelectorAll('.flagToggle').forEach(el=>{
+      el.addEventListener('change', async (ev)=>{
+        const tr = ev.target.closest('tr'); tr.classList.add('saving');
+        const id = tr.getAttribute('data-id');
+        const prev = el.dataset.prev === 'true';
+        const next = el.checked;
+        const { data: { user } } = await supabase.auth.getUser();
+        const updated_by = user?.id || null;
+        const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
+        tr.classList.remove('saving');
+        if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
+        el.dataset.prev = next ? 'true' : 'false';
+        if(sort.field === 'flag'){ await loadPage(); }
+      });
+    });
+
+    // TAG4: salva na hora (blur ou Enter)
+    document.querySelectorAll('.tagInput').forEach(inp=>{
+      function saveTag(){
+        const v = (inp.value || '').toUpperCase().slice(0,4);
+        inp.value = v;
+        const tr = inp.closest('tr'); tr.classList.add('saving');
+        const id = tr.getAttribute('data-id');
+        (async ()=>{
+          const { data: { user } } = await supabase.auth.getUser();
+          const updated_by = user?.id || null;
+          const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
+          tr.classList.remove('saving');
+          if(error){ alert('Erro ao salvar TAG: '+error.message); }
+        })();
+      }
+      inp.addEventListener('blur', saveTag);
+      inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); saveTag(); } });
+    });
+
+    // S1..S7: salva na hora
+    document.querySelectorAll('.sChk').forEach(el=>{
+      el.addEventListener('change', async (ev)=>{
+        const tr = ev.target.closest('tr'); tr.classList.add('saving');
+        const id = tr.getAttribute('data-id');
+        const key = 's'+ev.target.getAttribute('data-s');
+        const val = ev.target.checked;
+        const { data: { user } } = await supabase.auth.getUser();
+        const updated_by = user?.id || null;
+        const update = {}; update[key] = val; update['updated_by'] = updated_by;
+        const { error } = await supabase.from(TABLE).update(update).eq('id', id);
+        tr.classList.remove('saving');
+        if(error){ alert('Erro ao salvar '+key+': '+error.message); }
+      });
+    });
+
+    // Copiar user:pass
+    document.querySelectorAll('.copyBtn').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{
+        const tr = ev.target.closest('tr');
+        const cols = tr.querySelectorAll('td');
+        const user = cols[0].innerText.trim();
+        const pass = cols[1].innerText.trim();
+        navigator.clipboard.writeText(user+':'+pass);
+        btn.textContent = 'Copiado ✓';
+        setTimeout(()=> btn.textContent = 'Copiar', 800);
+      });
+    });
+
+    // Abrir modal de exclusão
+    document.querySelectorAll('.delBtn').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{
+        const tr = ev.target.closest('tr');
+        const id = tr.getAttribute('data-id');
+        openDelModal(id);
+      });
+    });
+  }
+
+  // ===== ACTIONS =====
+  applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
+  prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
+  nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
+  limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
+
+  // Sort headers
+  thWcoin.addEventListener('click', ()=>{
+    if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; }
+    else { sort.asc = !sort.asc; }
+    hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
+    hintO.textContent = '⇅';
+    hintF.textContent = '⇅';
+    page = 1; loadPage();
+  });
+
+  thOnline.addEventListener('click', ()=>{
+    if(sort.field !== 'online'){ sort = { field: 'online', asc: false }; }
+    else { sort.asc = !sort.asc; }
+    hintO.textContent = sort.field==='online' ? (sort.asc?'↑':'↓') : '⇅';
+    hintW.textContent = '⇅';
+    hintF.textContent = '⇅';
+    page = 1; loadPage();
+  });
+
+  thFlag.addEventListener('click', ()=>{
+    if(sort.field !== 'flag'){ sort = { field: 'flag', asc: false }; }
+    else { sort.asc = !sort.asc; }
+    hintF.textContent = sort.field==='flag' ? (sort.asc?'↑':'↓') : '⇅';
+    hintW.textContent = '⇅';
+    hintO.textContent = '⇅';
+    page = 1; loadPage();
+  });
+
+  // Realtime: atualiza cards/ordem quando houver INSERT/UPDATE
+  try {
+    const channel = supabase.channel('realtime:webzen_cache_raw')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: TABLE }, async () => {
+        if(page === 1){ await loadPage(); }
+        await loadCards();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: TABLE }, async () => {
+        await loadCards();
+        if(sort.field === 'online' || sort.field === 'flag'){ await loadPage(); }
+      })
+      .subscribe();
+  } catch(err){ console.warn('Realtime indisponível:', err); }
+</script>
+
+</body>
+</html>
