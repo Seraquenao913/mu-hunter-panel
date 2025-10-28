@@ -49,13 +49,13 @@
     .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
     .show { display: flex; }
 
-    /* Checkbox estilo "computed" azul */
+    /* Checkbox estilo "computed" VERMELHO */
     .cbfx {
       appearance: none;
       -webkit-appearance: none;
       width: 26px;
       height: 26px;
-      border: 1px solid rgb(62, 100, 255);
+      border: 1px solid rgb(255, 70, 70);
       border-radius: 3px;
       background: rgba(0,0,0,0);
       box-shadow: rgba(0,0,0,0.09) 0 5px 18px -12px;
@@ -69,9 +69,9 @@
                   box-shadow .15s ease-in-out,
                   transform .12s ease-in-out;
     }
-    .cbfx:hover { box-shadow: rgba(62,100,255,.35) 0 0 0 2px inset; }
+    .cbfx:hover { box-shadow: rgba(255,70,70,.45) 0 0 0 2px inset; }
     .cbfx:active { transform: scale(0.95); }
-    .cbfx:checked { background-color: rgb(62,100,255); border-color: rgb(62,100,255); }
+    .cbfx:checked { background-color: rgb(255,70,70); border-color: rgb(255,70,70); }
     .cbfx:checked::after {
       content: "";
       position: relative;
@@ -84,7 +84,7 @@
       border-right: 0;
       transform: rotate(-45deg);
     }
-    .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(62,100,255,.35); }
+    .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,70,70,.35); }
   </style>
 </head>
 
@@ -212,8 +212,8 @@
   </div>
 
 <script type="module">
-  const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";     // << SUBSTITUA
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";            // << SUBSTITUA
+  const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
   const TABLE = "webzen_cache_raw";
 
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
