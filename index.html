@@ -85,6 +85,19 @@
       transform: rotate(-45deg);
     }
     .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,70,70,.35); }
+
+    /* Botão de ícone compacto */
+    .iconBtn {
+      width: 28px; height: 28px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      background: #3f3f46;
+      color: #e5e7eb;
+      transition: transform .12s ease, background-color .15s ease;
+    }
+    .iconBtn:hover { background: #52525b; }
+    .iconBtn:active { transform: scale(0.95); }
+    .iconBtn svg { width: 16px; height: 16px; }
   </style>
 </head>
 
@@ -345,26 +358,39 @@
     closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
   });
 
+  function copyIconSvg(){
+    return \`
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>\`;
+  }
+
   function renderRows(items){
-    rows.innerHTML = items.map(r => `
-      <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
+    rows.innerHTML = items.map(r => \`
+      <tr class="hover:bg-zinc-900/60 transition" data-id="\${r.id}">
         <td class="px-3 py-2 whitespace-nowrap font-medium">
           <div class="flex items-center gap-2">
-            <span class="userText">${r.f1 ?? ''}</span>
-            <button class="copyUser px-1.5 py-0.5 rounded bg-zinc-700 hover:bg-zinc-600 text-xs transition">Copiar</button>
+            <span>\${r.f1 ?? ''}</span>
+            <button class="iconBtn copyUserBtn" title="Copiar usuário" aria-label="Copiar usuário">
+              \${copyIconSvg()}
+            </button>
           </div>
         </td>
         <td class="px-3 py-2 whitespace-nowrap">
           <div class="flex items-center gap-2">
-            <span class="passText">${r.f2 ?? ''}</span>
-            <button class="copyPass px-1.5 py-0.5 rounded bg-zinc-700 hover:bg-zinc-600 text-xs transition">Copiar</button>
+            <span>\${r.f2 ?? ''}</span>
+            <button class="iconBtn copyPassBtn" title="Copiar senha" aria-label="Copiar senha">
+              \${copyIconSvg()}
+            </button>
           </div>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap">${r.wcoin_int ?? 0}</td>
+        <td class="px-3 py-2 whitespace-nowrap">\${r.wcoin_int ?? 0}</td>
 
         <td class="px-3 py-2 whitespace-nowrap">
           <label class="switch">
-            <input type="checkbox" class="onlineToggle" data-prev="${r.online ? 'true' : 'false'}" ${r.online ? 'checked' : ''}>
+            <input type="checkbox" class="onlineToggle" data-prev="\${r.online ? 'true' : 'false'}" \${r.online ? 'checked' : ''}>
             <span class="slider"></span>
           </label>
         </td>
@@ -372,65 +398,48 @@
         <td class="px-3 py-2 whitespace-nowrap">
           <div class="flex items-center gap-2">
             <label class="switch">
-              <input type="checkbox" class="flagToggle" data-prev="${r.flag ? 'true' : 'false'}" ${r.flag ? 'checked' : ''}>
+              <input type="checkbox" class="flagToggle" data-prev="\${r.flag ? 'true' : 'false'}" \${r.flag ? 'checked' : ''}>
               <span class="slider"></span>
             </label>
             <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700"
-                   maxlength="4" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
+                   maxlength="4" value="\${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
           </div>
         </td>
 
         <td class="px-3 py-2 text-center">
-          <input type="checkbox" class="olharToggle cbfx" ${r.olhar ? 'checked' : ''}/>
+          <input type="checkbox" class="olharToggle cbfx" \${r.olhar ? 'checked' : ''}/>
         </td>
 
-        ${[1,2,3,4,5,6,7].map(n => `
+        \${[1,2,3,4,5,6,7].map(n => \`
           <td class="px-3 py-2 text-center">
-            <input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/>
+            <input type="checkbox" class="sChk cbfx" data-s="\${n}" \${r['s'+n] ? 'checked' : ''}/>
           </td>
-        `).join('')}
+        \`).join('')}
 
         <td class="px-3 py-2 whitespace-nowrap text-center">
-          <button class="copyBtn px-2 py-1.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 transition">Copiar Tudo</button>
           <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
         </td>
       </tr>
-    `).join('');
+    \`).join('');
   }
 
-  // Copiar apenas o usuário
-  rows.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('.copyUser');
-    if(!btn) return;
-    const tr = btn.closest('tr');
-    const user = tr.querySelector('.userText')?.innerText.trim() || '';
-    navigator.clipboard.writeText(user);
-    btn.textContent = 'Copiado ✓';
-    setTimeout(() => btn.textContent = 'Copiar', 800);
-  });
-
-  // Copiar apenas a senha
-  rows.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('.copyPass');
-    if(!btn) return;
-    const tr = btn.closest('tr');
-    const pass = tr.querySelector('.passText')?.innerText.trim() || '';
-    navigator.clipboard.writeText(pass);
-    btn.textContent = 'Copiado ✓';
-    setTimeout(() => btn.textContent = 'Copiar', 800);
-  });
-
-  // Copiar usuario:senha
+  // Copy via icon buttons
   rows.addEventListener('click', (ev)=>{
-    const btn = ev.target.closest('.copyBtn'); if(!btn) return;
-    const tr = btn.closest('tr');
-    const user = tr.querySelector('.userText')?.innerText.trim() || '';
-    const pass = tr.querySelector('.passText')?.innerText.trim() || '';
-    navigator.clipboard.writeText(`${user}:${pass}`);
-    btn.textContent = 'Copiado ✓'; setTimeout(()=> btn.textContent = 'Copiar Tudo', 800);
+    const btnUser = ev.target.closest('.copyUserBtn');
+    const btnPass = ev.target.closest('.copyPassBtn');
+    if(!btnUser && !btnPass) return;
+    const tr = (btnUser or btnPass) ? (btnUser or btnPass).closest('tr') : null;
+    if(!tr) return;
+    const cells = tr.querySelectorAll('td');
+    const user = cells[0].querySelector('span').innerText.trim();
+    const pass = cells[1].querySelector('span').innerText.trim();
+    const text = btnUser ? user : pass;
+    navigator.clipboard.writeText(text);
+    (btnUser or btnPass).style.transform = 'scale(0.9)';
+    setTimeout(()=>{ (btnUser or btnPass).style.transform = 'scale(1)'; }, 180);
   });
 
-  // Abrir modal de exclusão
+  // Excluir
   rows.addEventListener('click', (ev)=>{
     const btn = ev.target.closest('.delBtn'); if(!btn) return;
     const tr = btn.closest('tr'); openDelModal(tr.getAttribute('data-id'));
@@ -484,7 +493,7 @@
     tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
   });
 
-  // TAG4 salva no blur/enter
+  // TAG4 salva
   rows.addEventListener('blur', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('tagInput')) return;
@@ -499,13 +508,11 @@
     if(ev.key !== 'Enter') return; ev.preventDefault(); el.blur();
   });
 
-  // Filtros/paginação
   applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
   prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
-  nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
+  nextBtn.addEventListener('click', ()=>{ page++; loadPage(); } );
   limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-  // Sort headers
   thWcoin.addEventListener('click', ()=>{
     if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; } else { sort.asc = !sort.asc; }
     hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
@@ -531,7 +538,6 @@
     page = 1; loadPage();
   });
 
-  // Realtime
   try {
     const channel = supabase.channel('realtime:webzen_cache_raw')
       .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
