@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Account Mu Hunter Panel</title>
 
+  <!-- Favicon inline para evitar 404 -->
+  <link rel="icon" href="data:,">
+
   <script>document.documentElement.classList.add('dark');</script>
 
   <!-- Tailwind (ok para DEV). Em produção, instale via CLI/PostCSS -->
@@ -243,7 +246,7 @@
 
     const cardTotal = document.getElementById('cardTotal');
     const cardOnline = document.getElementById('cardOnline');
-    const cardValid = document.getElementById('cardValid'); // <— corrigido
+    const cardValid = document.getElementById('cardValid');
     const cardWSum = document.getElementById('cardWSum');
 
     const thWcoin = document.getElementById('thWcoin');
@@ -294,6 +297,12 @@
 
     logoutBtn.addEventListener('click', async ()=>{ try { await supabase.auth.signOut(); } finally { await updateSession(); } });
     await updateSession();
+
+    // ========== ÍCONE (declarado ANTES de renderRows) ==========
+    const iconCopy =
+      '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+
+      '<rect x="9" y="9" width="13" height="13" rx="2"/>'+
+      '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
     // ========== SELECT HELPERS ==========
     function baseSelect(){
@@ -388,8 +397,6 @@
     });
 
     // ========== RENDER ROWS ==========
-    const iconCopy = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-
     function renderRows(items){
       rows.innerHTML = items.map(r => `
         <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
@@ -472,7 +479,6 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
-      el.dataset.prev = next ? 'true' : 'false';
       if(sort.field === 'online'){ await loadPage(); }
     });
 
@@ -484,7 +490,6 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
-      el.dataset.prev = next ? 'true':'false';
       if(sort.field === 'flag'){ await loadPage(); }
     });
 
