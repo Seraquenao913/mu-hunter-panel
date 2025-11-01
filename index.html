@@ -1,3 +1,4 @@
+\
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -9,9 +10,11 @@
 
   <!-- Tailwind (ok para dev) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
 
-  <!-- Supabase JS v2 (ESM) -->
+  <!-- Supabase JS v2 -->
   <script type="module" crossorigin src="https://esm.sh/@supabase/supabase-js@2"></script>
 
   <style>
@@ -237,8 +240,9 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";   // ajuste se seu projeto for outro
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8"; // ajuste se necessário
+    // >>>>> TROQUE PELOS DADOS DO SEU PROJETO, se necessário
+    const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -312,7 +316,7 @@
     function applyFilters(q){
       const s = search.value.trim();
       const valid = validFilter.value;
-      if(s){ q = q.or(\`f1.ilike.%\${s}%,f2.ilike.%\${s}%\`); }
+      if(s){ q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`); }
       if(valid === 'yes'){ q = q.eq('f3', 'valid'); }
       return q;
     }
@@ -357,11 +361,11 @@
       let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
       const { data, error } = await q;
       if(error){
-        rows.innerHTML = \`<tr><td class='px-3 py-2 text-red-500'>\${error.message}</td></tr>\`;
+        rows.innerHTML = `<tr><td class="px-3 py-2 text-red-500">${error.message}</td></tr>`;
         return;
       }
       renderRows(data || []);
-      pageLbl.textContent = \`Página \${page}\`;
+      pageLbl.textContent = `Página ${page}`;
     }
 
     // MODAL DELETE
@@ -372,13 +376,13 @@
     const confirmDel = document.getElementById('confirmDel');
     function openDelModal(id){ pendingDeleteId = id; delModal.classList.add('show'); }
     function closeDelModal(){ delModal.classList.remove('show'); pendingDeleteId = null; }
-    closeModal.addEventListener('click', closeDelModal);
-    cancelDel.addEventListener('click', closeDelModal);
-    confirmDel.addEventListener('click', async ()=>{
+    if (closeModal) closeModal.addEventListener('click', closeDelModal);
+    if (cancelDel) cancelDel.addEventListener('click', closeDelModal);
+    if (confirmDel) confirmDel.addEventListener('click', async ()=>{
       if(!pendingDeleteId) return;
       const { error } = await supabase.from(TABLE).delete().eq('id', pendingDeleteId);
       if(error){ alert('Erro ao excluir: '+error.message); return; }
-      const tr = rows.querySelector(\`tr[data-id="\${pendingDeleteId}"]\`); if(tr) tr.remove();
+      const tr = rows.querySelector(`tr[data-id="${pendingDeleteId}"]`); if(tr) tr.remove();
       closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
     });
 
@@ -386,27 +390,27 @@
     const iconCopy = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
     function renderRows(items){
-      rows.innerHTML = items.map(r => \`
-        <tr class="hover:bg-zinc-900/60 transition" data-id="\${r.id}">
+      rows.innerHTML = items.map(r => `
+        <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
           <td class="px-3 py-2 whitespace-nowrap font-medium">
             <div class="flex items-center gap-2">
-              <span>\${r.f1 ?? ''}</span>
-              <button class="iconbtn copyUserBtn" title="Copiar usuário">\${iconCopy}</button>
+              <span>${r.f1 ?? ''}</span>
+              <button class="iconbtn copyUserBtn" title="Copiar usuário">${iconCopy}</button>
             </div>
           </td>
 
           <td class="px-3 py-2 whitespace-nowrap">
             <div class="flex items-center gap-2">
-              <span>\${r.f2 ?? ''}</span>
-              <button class="iconbtn copyPassBtn" title="Copiar senha">\${iconCopy}</button>
+              <span>${r.f2 ?? ''}</span>
+              <button class="iconbtn copyPassBtn" title="Copiar senha">${iconCopy}</button>
             </div>
           </td>
 
-          <td class="px-3 py-2 whitespace-nowrap">\${r.wcoin_int ?? 0}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${r.wcoin_int ?? 0}</td>
 
           <td class="px-3 py-2 whitespace-nowrap">
             <label class="switch">
-              <input type="checkbox" class="onlineToggle" data-prev="\${r.online ? 'true' : 'false'}" \${r.online ? 'checked' : ''}>
+              <input type="checkbox" class="onlineToggle" data-prev="${r.online ? 'true' : 'false'}" ${r.online ? 'checked' : ''}>
               <span class="slider"></span>
             </label>
           </td>
@@ -414,29 +418,29 @@
           <td class="px-3 py-2 whitespace-nowrap">
             <div class="flex items-center gap-2">
               <label class="switch">
-                <input type="checkbox" class="flagToggle" data-prev="\${r.flag ? 'true' : 'false'}" \${r.flag ? 'checked' : ''}>
+                <input type="checkbox" class="flagToggle" data-prev="${r.flag ? 'true' : 'false'}" ${r.flag ? 'checked' : ''}>
                 <span class="slider"></span>
               </label>
               <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700"
-                    maxlength="4" value="\${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
+                    maxlength="4" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
             </div>
           </td>
 
           <td class="px-3 py-2 text-center">
-            <input type="checkbox" class="olharToggle cbfx" \${r.olhar ? 'checked' : ''}/>
+            <input type="checkbox" class="olharToggle cbfx" ${r.olhar ? 'checked' : ''}/>
           </td>
 
-          \${[1,2,3,4,5,6,7].map(n => \`
+          ${[1,2,3,4,5,6,7].map(n => `
             <td class="px-3 py-2 text-center">
-              <input type="checkbox" class="sChk cbfx" data-s="\${n}" \${r['s'+n] ? 'checked' : ''}/>
+              <input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/>
             </td>
-          \`).join('')}
+          `).join('')}
 
           <td class="px-3 py-2 whitespace-nowrap text-center">
             <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
           </td>
         </tr>
-      \`).join('');
+      `).join('');
     }
 
     // EVENTOS NO TBODY (delegação)
@@ -489,7 +493,7 @@
       if(sort.field === 'flag'){ await loadPage(); }
     });
 
-    // OLHAR (Rapelado)
+    // OLHAR
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('olharToggle')) return;
