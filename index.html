@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title> Hunter Painel</title>
+  <title>Account Mu Hunter Panel</title>
 
   <script>document.documentElement.classList.add('dark');</script>
 
@@ -85,16 +85,6 @@
       transform: rotate(-45deg);
     }
     .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,70,70,.35); }
-
-    /* Botão estilizado (importar cache) */
-    .btn-outline {
-      border: 1px solid rgb(62,100,255);
-      color: rgb(62,100,255);
-      padding: 8px 14px;
-      border-radius: 12px;
-      transition: all .15s ease-in-out;
-    }
-    .btn-outline:hover { background: rgba(62,100,255,.1); }
   </style>
 </head>
 
@@ -102,28 +92,19 @@
   <div id="app" class="max-w-7xl mx-auto p-4">
 
     <header class="mb-6">
-      <div class="rounded-2xl glass border border-zinc-800 p-6 shadow">
-        <div class="flex items-center justify-between gap-4 flex-wrap">
-          <div class="text-center mx-auto md:mx-0">
-            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
-               Hunter Painel
-            </h1>
-            <p class="mt-2 text-sm text-zinc-400"></p>
-          </div>
-
-          <!-- Menu lateral direito -->
-          <div class="flex items-center gap-3">
-            <input id="fileInput" type="file" accept=".txt" class="hidden" />
-            <button id="importBtn" class="btn-outline">Importar cache.txt</button>
-            <button id="logoutBtn" class="px-3 py-1.5 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">
-              Sair
-            </button>
-          </div>
+      <div class="rounded-2xl glass border border-zinc-800 p-6 text-center shadow">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
+          Account Mu Hunter Panel
+        </h1>
+        <p class="mt-2 text-sm text-zinc-400">gerencie status, tags e controles em tempo real</p>
+        <div class="mt-4 flex items-center justify-center">
+          <button id="logoutBtn" class="px-3 py-1.5 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">
+            Sair
+          </button>
         </div>
       </div>
     </header>
 
-    <!-- Auth -->
     <section id="authCard" class="max-w-md mx-auto mt-8 bg-zinc-900 border border-zinc-800 shadow rounded-2xl p-6">
       <h2 class="text-xl font-semibold mb-4">Entrar</h2>
       <div class="space-y-3">
@@ -140,9 +121,7 @@
       </div>
     </section>
 
-    <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-      <!-- Filtros -->
       <div class="grid md:grid-cols-4 gap-3 mb-4">
         <div class="col-span-2">
           <label class="text-sm text-zinc-300">Busca (username ou senha)</label>
@@ -160,7 +139,6 @@
         </div>
       </div>
 
-      <!-- Cards -->
       <div class="grid md:grid-cols-4 gap-3 mb-4">
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
           <div class="text-sm text-zinc-400">Total filtrado</div>
@@ -180,7 +158,6 @@
         </div>
       </div>
 
-      <!-- Tabela -->
       <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
         <table class="min-w-full text-sm">
           <thead class="bg-zinc-900 border-b border-zinc-800">
@@ -218,7 +195,6 @@
     </section>
   </div>
 
-  <!-- Modal de confirmação de exclusão -->
   <div id="delModal" class="modal-overlay">
     <div class="modal">
       <header class="flex items-center justify-between">
@@ -236,16 +212,14 @@
   </div>
 
 <script type="module">
-  // ===== CONFIG =====
-  const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";     // << SUBSTITUA
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";                      // << SUBSTITUA
+  const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
   const TABLE = "webzen_cache_raw";
 
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.supabase = supabase; // para console
+  window.supabase = supabase;
 
-  // ===== UI NODES =====
   const authCard = document.getElementById('authCard');
   const dashboard = document.getElementById('dashboard');
   const loginBtn = document.getElementById('loginBtn');
@@ -278,16 +252,12 @@
   const hintF = document.getElementById('hintF');
   const hintOlhar = document.getElementById('hintOlhar');
 
-  const importBtn = document.getElementById('importBtn');
-  const fileInput = document.getElementById('fileInput');
-
   localStorage.setItem('theme','dark');
 
   let page = 1;
   let sort = { field: 'inserted_at', asc: false };
   let sessionUser = null;
 
-  // ===== AUTH =====
   async function updateSession(){
     const { data: { session } } = await supabase.auth.getSession();
     const logged = !!session;
@@ -312,35 +282,8 @@
   logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
   await updateSession();
 
-  // ===== IMPORTAR CACHE.TXT =====
-  importBtn.addEventListener('click', ()=> fileInput.click());
-  fileInput.addEventListener('change', async (ev)=>{
-    const file = ev.target.files?.[0];
-    if(!file) return;
-    if(file.size > 10 * 1024 * 1024){ // 10MB
-      alert("Arquivo muito grande. Máximo 10MB.");
-      return;
-    }
-    const text = await file.text();
-    importBtn.disabled = true; importBtn.textContent = "Importando...";
-    const { data, error } = await supabase.rpc('ingest_cache_txt', { _content: text });
-    importBtn.disabled = false; importBtn.textContent = "Importar cache.txt";
-    if(error){
-      alert('Falha ao importar: ' + (error.message || JSON.stringify(error)));
-      return;
-    }
-    alert(`Importado com sucesso:
-Novas: ${data?.inserted || 0}
-Ignoradas (duplicadas): ${data?.skipped || 0}`);
-    page = 1;
-    await loadPage();
-  });
-
-  // ===== QUERIES =====
   function baseSelect(){
-    return supabase.from(TABLE).select(
-      'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar'
-    );
+    return supabase.from(TABLE).select('id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar');
   }
   function applyFilters(q){
     const s = search.value.trim(); const valid = validFilter.value;
@@ -385,7 +328,6 @@ Ignoradas (duplicadas): ${data?.skipped || 0}`);
     renderRows(data || []); pageLbl.textContent = `Página ${page}`;
   }
 
-  // ===== Modal Excluir =====
   let pendingDeleteId = null;
   const delModal = document.getElementById('delModal');
   const closeModal = document.getElementById('closeModal');
@@ -403,12 +345,21 @@ Ignoradas (duplicadas): ${data?.skipped || 0}`);
     closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
   });
 
-  // ===== Render =====
   function renderRows(items){
     rows.innerHTML = items.map(r => `
       <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
-        <td class="px-3 py-2 whitespace-nowrap font-medium">${r.f1 ?? ''}</td>
-        <td class="px-3 py-2 whitespace-nowrap">${r.f2 ?? ''}</td>
+        <td class="px-3 py-2 whitespace-nowrap font-medium">
+          <div class="flex items-center gap-2">
+            <span class="userText">${r.f1 ?? ''}</span>
+            <button class="copyUser px-1.5 py-0.5 rounded bg-zinc-700 hover:bg-zinc-600 text-xs transition">Copiar</button>
+          </div>
+        </td>
+        <td class="px-3 py-2 whitespace-nowrap">
+          <div class="flex items-center gap-2">
+            <span class="passText">${r.f2 ?? ''}</span>
+            <button class="copyPass px-1.5 py-0.5 rounded bg-zinc-700 hover:bg-zinc-600 text-xs transition">Copiar</button>
+          </div>
+        </td>
         <td class="px-3 py-2 whitespace-nowrap">${r.wcoin_int ?? 0}</td>
 
         <td class="px-3 py-2 whitespace-nowrap">
@@ -440,21 +391,46 @@ Ignoradas (duplicadas): ${data?.skipped || 0}`);
         `).join('')}
 
         <td class="px-3 py-2 whitespace-nowrap text-center">
-          <button class="copyBtn px-2 py-1.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 transition">Copiar</button>
+          <button class="copyBtn px-2 py-1.5 rounded-xl bg-zinc-700 hover:bg-zinc-600 transition">Copiar Tudo</button>
           <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
         </td>
       </tr>
     `).join('');
   }
 
-  // ===== Delegação de eventos =====
+  // Copiar apenas o usuário
+  rows.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.copyUser');
+    if(!btn) return;
+    const tr = btn.closest('tr');
+    const user = tr.querySelector('.userText')?.innerText.trim() || '';
+    navigator.clipboard.writeText(user);
+    btn.textContent = 'Copiado ✓';
+    setTimeout(() => btn.textContent = 'Copiar', 800);
+  });
+
+  // Copiar apenas a senha
+  rows.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.copyPass');
+    if(!btn) return;
+    const tr = btn.closest('tr');
+    const pass = tr.querySelector('.passText')?.innerText.trim() || '';
+    navigator.clipboard.writeText(pass);
+    btn.textContent = 'Copiado ✓';
+    setTimeout(() => btn.textContent = 'Copiar', 800);
+  });
+
+  // Copiar usuario:senha
   rows.addEventListener('click', (ev)=>{
     const btn = ev.target.closest('.copyBtn'); if(!btn) return;
-    const tr = btn.closest('tr'); const cells = tr.querySelectorAll('td');
-    const user = cells[0].innerText.trim(); const pass = cells[1].innerText.trim();
+    const tr = btn.closest('tr');
+    const user = tr.querySelector('.userText')?.innerText.trim() || '';
+    const pass = tr.querySelector('.passText')?.innerText.trim() || '';
     navigator.clipboard.writeText(`${user}:${pass}`);
-    btn.textContent = 'Copiado ✓'; setTimeout(()=> btn.textContent = 'Copiar', 800);
+    btn.textContent = 'Copiado ✓'; setTimeout(()=> btn.textContent = 'Copiar Tudo', 800);
   });
+
+  // Abrir modal de exclusão
   rows.addEventListener('click', (ev)=>{
     const btn = ev.target.closest('.delBtn'); if(!btn) return;
     const tr = btn.closest('tr'); openDelModal(tr.getAttribute('data-id'));
@@ -485,7 +461,7 @@ Ignoradas (duplicadas): ${data?.skipped || 0}`);
     el.dataset.prev = next ? 'true':'false'; if(sort.field === 'flag'){ await loadPage(); }
   });
 
-  // OLHAR / RAPELADO toggle
+  // OLHAR toggle
   rows.addEventListener('change', async (ev)=>{
     const el = ev.target;
     if(!el.classList.contains('olharToggle')) return;
@@ -518,13 +494,12 @@ Ignoradas (duplicadas): ${data?.skipped || 0}`);
     const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
     tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
   }, true);
-
   rows.addEventListener('keydown', (ev)=>{
     const el = ev.target; if(!el.classList.contains('tagInput')) return;
     if(ev.key !== 'Enter') return; ev.preventDefault(); el.blur();
   });
 
-  // ===== ACTIONS =====
+  // Filtros/paginação
   applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
   prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
   nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
