@@ -5,12 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Account Mu Hunter Panel</title>
 
-  <!-- Favicon inline para evitar 404 -->
-  <link rel="icon" href="data:,">
-
   <script>document.documentElement.classList.add('dark');</script>
 
-  <!-- Tailwind (ok para DEV). Em produção, instale via CLI/PostCSS -->
+  <!-- Tailwind (ok para DEV; em produção use build/CLI) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
 
@@ -40,31 +37,54 @@
       background-clip: text;
       color: transparent;
     }
-    .glass { backdrop-filter: saturate(180%) blur(6px); background-color: rgba(24,24,27,.5); }
+    .glass {
+      backdrop-filter: saturate(180%) blur(6px);
+      background-color: rgba(24,24,27,.5);
+    }
 
     .modal-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
                      background: rgba(0,0,0,.6); z-index: 50; }
     .modal { width: 100%; max-width: 420px; border-radius: 16px; background: #0a0a0a; border: 1px solid #27272a;
              box-shadow: 0 10px 30px rgba(0,0,0,.35); }
     .modal header { padding: 14px 16px; border-bottom: 1px solid #27272a;}
-    .modal .content, .modal .actions { padding: 16px; }
+    .modal .content { padding: 16px; }
+    .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
     .show { display: flex; }
 
     /* Checkbox custom VERMELHO */
     .cbfx {
-      appearance: none; -webkit-appearance: none;
-      width: 26px; height: 26px; border: 1px solid rgb(255, 70, 70);
-      border-radius: 3px; background: rgba(0,0,0,0);
+      appearance: none;
+      -webkit-appearance: none;
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgb(255, 70, 70);
+      border-radius: 3px;
+      background: rgba(0,0,0,0);
       box-shadow: rgba(0,0,0,0.09) 0 5px 18px -12px;
-      box-sizing: border-box; cursor: pointer; display: inline-block; vertical-align: middle;
-      transition: color .15s, background-color .15s, border-color .15s, box-shadow .15s, transform .12s;
+      box-sizing: border-box;
+      cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
+      transition: color .15s ease-in-out,
+                  background-color .15s ease-in-out,
+                  border-color .15s ease-in-out,
+                  box-shadow .15s ease-in-out,
+                  transform .12s ease-in-out;
     }
     .cbfx:hover { box-shadow: rgba(255,70,70,.45) 0 0 0 2px inset; }
     .cbfx:active { transform: scale(0.95); }
     .cbfx:checked { background-color: rgb(255,70,70); border-color: rgb(255,70,70); }
     .cbfx:checked::after {
-      content: ""; position: relative; display: block; width: 12px; height: 6px; margin: 6px auto 0;
-      border: 2px solid #fff; border-top: 0; border-right: 0; transform: rotate(-45deg);
+      content: "";
+      position: relative;
+      display: block;
+      width: 12px;
+      height: 6px;
+      margin: 6px auto 0;
+      border: 2px solid #fff;
+      border-top: 0;
+      border-right: 0;
+      transform: rotate(-45deg);
     }
     .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,70,70,.35); }
 
@@ -217,94 +237,83 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // ================== CONFIG ==================
-    const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
+    // === CONFIG SUPABASE ======================================================
+    const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";   // confira
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.supabase = supabase;
 
-    // ================== NODES ==================
-    const authCard = document.getElementById('authCard');
-    const dashboard = document.getElementById('dashboard');
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const email = document.getElementById('email');
-    const password = document.getElementById('password');
-    const authMsg = document.getElementById('authMsg');
+    // === NODES ================================================================
+    const authCard   = document.getElementById('authCard');
+    const dashboard  = document.getElementById('dashboard');
+    const loginBtn   = document.getElementById('loginBtn');
+    const logoutBtn  = document.getElementById('logoutBtn');
+    const email      = document.getElementById('email');
+    const password   = document.getElementById('password');
+    const authMsg    = document.getElementById('authMsg');
 
-    const search = document.getElementById('search');
-    const validFilter = document.getElementById('validFilter');
-    const applyBtn = document.getElementById('applyBtn');
+    const search     = document.getElementById('search');
+    const validFilter= document.getElementById('validFilter');
+    const applyBtn   = document.getElementById('applyBtn');
 
-    const rows = document.getElementById('rows');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const pageLbl = document.getElementById('pageLbl');
-    const limitSel = document.getElementById('limitSel');
+    const rows       = document.getElementById('rows');
+    const prevBtn    = document.getElementById('prevBtn');
+    const nextBtn    = document.getElementById('nextBtn');
+    const pageLbl    = document.getElementById('pageLbl');
+    const limitSel   = document.getElementById('limitSel');
 
-    const cardTotal = document.getElementById('cardTotal');
+    const cardTotal  = document.getElementById('cardTotal');
     const cardOnline = document.getElementById('cardOnline');
-    const cardValid = document.getElementById('cardValid');
-    const cardWSum = document.getElementById('cardWSum');
+    const theCardValid = document.getElementById('cardValid');
+    const cardWSum   = document.getElementById('cardWSum');
 
-    const thWcoin = document.getElementById('thWcoin');
-    const thOnline = document.getElementById('thOnline');
-    const thFlag = document.getElementById('thFlag');
-    const thOlhar = document.getElementById('thOlhar');
-    const hintW = document.getElementById('hintW');
-    const hintO = document.getElementById('hintO');
-    const hintF = document.getElementById('hintF');
-    const hintOlhar = document.getElementById('hintOlhar');
+    const thWcoin    = document.getElementById('thWcoin');
+    const thOnline   = document.getElementById('thOnline');
+    const thFlag     = document.getElementById('thFlag');
+    const thOlhar    = document.getElementById('thOlhar');
+    const hintW      = document.getElementById('hintW');
+    const hintO      = document.getElementById('hintO');
+    const hintF      = document.getElementById('hintF');
+    const hintOlhar  = document.getElementById('hintOlhar');
 
     localStorage.setItem('theme','dark');
     let page = 1;
     let sort = { field: 'inserted_at', asc: false };
 
-    // =========== ERROR HANDLERS ===========
-    window.addEventListener('error', (e)=> console.error('JS Error:', e.message, e.filename, e.lineno, e.colno, e.error));
-    window.addEventListener('unhandledrejection', (e)=> console.error('Promise Rejection:', e.reason));
+    // === UTIL: ícone de copiar (função hoisted) ===============================
+    function iconCopySvg(){
+      return (
+        '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+      + '<rect x="9" y="9" width="13" height="13" rx="2"/>'
+      + '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+      );
+    }
 
-    // ================== AUTH ==================
+    // === AUTH ================================================================
     async function updateSession(){
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) console.error('getSession error:', error);
-        const logged = !!session;
-        authCard.classList.toggle('hidden', logged);
-        dashboard.classList.toggle('hidden', !logged);
-        logoutBtn.classList.toggle('hidden', !logged);
-        if (logged) await loadPage();
-      } catch (err) {
-        console.error('updateSession()', err);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      const logged = !!session;
+      authCard.classList.toggle('hidden', logged);
+      dashboard.classList.toggle('hidden', !logged);
+      logoutBtn.classList.toggle('hidden', !logged);
+      if (logged) await loadPage();
     }
 
     loginBtn.addEventListener('click', async ()=>{
       authMsg.classList.add('hidden'); authMsg.textContent='';
       const e = email.value.trim(); const p = password.value;
       if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
-      try {
-        const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
-        if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
-        await updateSession();
-      } catch (err) {
-        authMsg.textContent = String(err); authMsg.classList.remove('hidden');
-        console.error('signInWithPassword()', err);
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
+      if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
+      await updateSession();
     });
 
-    logoutBtn.addEventListener('click', async ()=>{ try { await supabase.auth.signOut(); } finally { await updateSession(); } });
+    logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
     await updateSession();
 
-    // ========== ÍCONE (declarado ANTES de renderRows) ==========
-    const iconCopy =
-      '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+
-      '<rect x="9" y="9" width="13" height="13" rx="2"/>'+
-      '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-
-    // ========== SELECT HELPERS ==========
+    // === SELECT/QUERY HELPERS ================================================
     function baseSelect(){
       return supabase.from(TABLE).select(
         'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar'
@@ -332,51 +341,40 @@
       return q;
     }
 
-    // ========== CARDS ==========
+    // === CARDS ===============================================================
     async function loadCards(){
-      try {
-        let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
-        const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
+      let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
+      const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
 
-        let qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
-        const { count: onCount } = await qOn; cardOnline.textContent = onCount || 0;
+      let qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
+      const { count: onCount } = await qOn; cardOnline.textContent = onCount || 0;
 
-        let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
-        const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
+      let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
+      const { count: valCount } = await qVal; theCardValid.textContent = valCount || 0;
 
-        const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
-        const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
-        if (sumErr) { console.warn('sum_wcoin_filtered error:', sumErr.message); }
-        cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
-      } catch (err) {
-        console.error('loadCards()', err);
-      }
+      const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
+      const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
+      cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
     }
 
-    // ========== PAGE LOAD ==========
+    // === PAGE LOAD ===========================================================
     async function loadPage(){
-      try {
-        const limit = parseInt(limitSel.value,10) || 50;
-        const from = (page-1)*limit; const to = from + limit - 1;
+      const limit = parseInt(limitSel.value,10) || 50;
+      const from = (page-1)*limit; const to = from + limit - 1;
 
-        await loadCards();
+      await loadCards();
 
-        let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
-        const { data, error } = await q;
-        if(error){
-          rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
-          console.error('query error:', error);
-          return;
-        }
-        renderRows(data || []);
-        pageLbl.textContent = `Página ${page}`;
-      } catch (err) {
-        console.error('loadPage()', err);
-        rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>Falha ao carregar.</td></tr>`;
+      let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
+      const { data, error } = await q;
+      if(error){
+        rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
+        return;
       }
+      renderRows(data || []);
+      pageLbl.textContent = `Página ${page}`;
     }
 
-    // ========== MODAL DELETE ==========
+    // === MODAL DELETE ========================================================
     let pendingDeleteId = null;
     const delModal = document.getElementById('delModal');
     const closeModal = document.getElementById('closeModal');
@@ -388,29 +386,33 @@
     cancelDel.addEventListener('click', closeDelModal);
     confirmDel.addEventListener('click', async ()=>{
       if(!pendingDeleteId) return;
-      try {
-        const { error } = await supabase.from(TABLE).delete().eq('id', pendingDeleteId);
-        if(error){ alert('Erro ao excluir: '+error.message); return; }
-        const tr = rows.querySelector(`tr[data-id="${pendingDeleteId}"]`); if(tr) tr.remove();
-        closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
-      } catch (err) { console.error('delete row', err); }
+      const { error } = await supabase.from(TABLE).delete().eq('id', pendingDeleteId);
+      if(error){ alert('Erro ao excluir: '+error.message); return; }
+      const tr = rows.querySelector(`tr[data-id="${pendingDeleteId}"]`); if(tr) tr.remove();
+      closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
     });
 
-    // ========== RENDER ROWS ==========
+    // === RENDER ROWS =========================================================
+    function iconCopySvg(){ /* hoisted */ return (
+      '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+      + '<rect x="9" y="9" width="13" height="13" rx="2"/>'
+      + '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+    );}
+
     function renderRows(items){
       rows.innerHTML = items.map(r => `
         <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
           <td class="px-3 py-2 whitespace-nowrap font-medium">
             <div class="flex items-center gap-2">
               <span>${r.f1 ?? ''}</span>
-              <button class="iconbtn copyUserBtn" title="Copiar usuário">${iconCopy}</button>
+              <button class="iconbtn copyUserBtn" title="Copiar usuário">${iconCopySvg()}</button>
             </div>
           </td>
 
           <td class="px-3 py-2 whitespace-nowrap">
             <div class="flex items-center gap-2">
               <span>${r.f2 ?? ''}</span>
-              <button class="iconbtn copyPassBtn" title="Copiar senha">${iconCopy}</button>
+              <button class="iconbtn copyPassBtn" title="Copiar senha">${iconCopySvg()}</button>
             </div>
           </td>
 
@@ -451,7 +453,8 @@
       `).join('');
     }
 
-    // ========== EVENTOS NO TBODY ==========
+    // === EVENTOS NO TBODY ====================================================
+    // Copiar usuário
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyUserBtn'); if(!btn) return;
       const tr = btn.closest('tr'); const user = tr.querySelector('td:nth-child(1) span').innerText.trim();
@@ -459,6 +462,7 @@
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
 
+    // Copiar senha
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyPassBtn'); if(!btn) return;
       const tr = btn.closest('tr'); const pass = tr.querySelector('td:nth-child(2) span').innerText.trim();
@@ -466,11 +470,13 @@
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
 
+    // Excluir
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.delBtn'); if(!btn) return;
       const tr = btn.closest('tr'); openDelModal(tr.getAttribute('data-id'));
     });
 
+    // ONLINE
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('onlineToggle')) return;
@@ -479,9 +485,11 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
+      el.dataset.prev = next ? 'true' : 'false';
       if(sort.field === 'online'){ await loadPage(); }
     });
 
+    // FLAG
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('flagToggle')) return;
@@ -490,9 +498,11 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
+      el.dataset.prev = next ? 'true':'false';
       if(sort.field === 'flag'){ await loadPage(); }
     });
 
+    // OLHAR
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('olharToggle')) return;
@@ -503,6 +513,7 @@
       tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Rapelado: '+error.message); return; }
     });
 
+    // S1..S7
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('sChk')) return;
@@ -514,6 +525,7 @@
       tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
     });
 
+    // TAG4
     rows.addEventListener('blur', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('tagInput')) return;
@@ -523,19 +535,18 @@
       const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
     }, true);
-
     rows.addEventListener('keydown', (ev)=>{
       const el = ev.target; if(!el.classList.contains('tagInput')) return;
       if(ev.key !== 'Enter') return; ev.preventDefault(); el.blur();
     });
 
-    // ========== AÇÕES ==========
+    // AÇÕES
     applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-    // ========== SORT ==========
+    // SORT
     thWcoin.addEventListener('click', ()=>{
       if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; } else { sort.asc = !sort.asc; }
       hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
@@ -561,7 +572,7 @@
       page = 1; loadPage();
     });
 
-    // ========== REALTIME ==========
+    // REALTIME
     try {
       supabase.channel('realtime:webzen_cache_raw')
         .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
