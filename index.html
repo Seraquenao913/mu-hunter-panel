@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -8,11 +7,9 @@
 
   <script>document.documentElement.classList.add('dark');</script>
 
-  <!-- Tailwind (ok para dev) -->
+  <!-- Tailwind (ok para DEV). Em produção, instale via CLI/PostCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' };
-  </script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
 
   <!-- Supabase JS v2 -->
   <script type="module" crossorigin src="https://esm.sh/@supabase/supabase-js@2"></script>
@@ -40,54 +37,31 @@
       background-clip: text;
       color: transparent;
     }
-    .glass {
-      backdrop-filter: saturate(180%) blur(6px);
-      background-color: rgba(24,24,27,.5);
-    }
+    .glass { backdrop-filter: saturate(180%) blur(6px); background-color: rgba(24,24,27,.5); }
 
     .modal-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
                      background: rgba(0,0,0,.6); z-index: 50; }
     .modal { width: 100%; max-width: 420px; border-radius: 16px; background: #0a0a0a; border: 1px solid #27272a;
              box-shadow: 0 10px 30px rgba(0,0,0,.35); }
     .modal header { padding: 14px 16px; border-bottom: 1px solid #27272a;}
-    .modal .content { padding: 16px; }
-    .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
+    .modal .content, .modal .actions { padding: 16px; }
     .show { display: flex; }
 
     /* Checkbox custom VERMELHO */
     .cbfx {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 26px;
-      height: 26px;
-      border: 1px solid rgb(255, 70, 70);
-      border-radius: 3px;
-      background: rgba(0,0,0,0);
+      appearance: none; -webkit-appearance: none;
+      width: 26px; height: 26px; border: 1px solid rgb(255, 70, 70);
+      border-radius: 3px; background: rgba(0,0,0,0);
       box-shadow: rgba(0,0,0,0.09) 0 5px 18px -12px;
-      box-sizing: border-box;
-      cursor: pointer;
-      display: inline-block;
-      vertical-align: middle;
-      transition: color .15s ease-in-out,
-                  background-color .15s ease-in-out,
-                  border-color .15s ease-in-out,
-                  box-shadow .15s ease-in-out,
-                  transform .12s ease-in-out;
+      box-sizing: border-box; cursor: pointer; display: inline-block; vertical-align: middle;
+      transition: color .15s, background-color .15s, border-color .15s, box-shadow .15s, transform .12s;
     }
     .cbfx:hover { box-shadow: rgba(255,70,70,.45) 0 0 0 2px inset; }
     .cbfx:active { transform: scale(0.95); }
     .cbfx:checked { background-color: rgb(255,70,70); border-color: rgb(255,70,70); }
     .cbfx:checked::after {
-      content: "";
-      position: relative;
-      display: block;
-      width: 12px;
-      height: 6px;
-      margin: 6px auto 0;
-      border: 2px solid #fff;
-      border-top: 0;
-      border-right: 0;
-      transform: rotate(-45deg);
+      content: ""; position: relative; display: block; width: 12px; height: 6px; margin: 6px auto 0;
+      border: 2px solid #fff; border-top: 0; border-right: 0; transform: rotate(-45deg);
     }
     .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,70,70,.35); }
 
@@ -240,7 +214,7 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // >>>>> TROQUE PELOS DADOS DO SEU PROJETO, se necessário
+    // ================== CONFIG ==================
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
@@ -248,7 +222,7 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.supabase = supabase;
 
-    // NODES
+    // ================== NODES ==================
     const authCard = document.getElementById('authCard');
     const dashboard = document.getElementById('dashboard');
     const loginBtn = document.getElementById('loginBtn');
@@ -269,7 +243,7 @@
 
     const cardTotal = document.getElementById('cardTotal');
     const cardOnline = document.getElementById('cardOnline');
-    const cardValid = document.getElementById('cardValid');
+    const cardValid = document.getElementById('cardValid'); // <— corrigido
     const cardWSum = document.getElementById('cardWSum');
 
     const thWcoin = document.getElementById('thWcoin');
@@ -285,29 +259,43 @@
     let page = 1;
     let sort = { field: 'inserted_at', asc: false };
 
-    // AUTH
+    // =========== ERROR HANDLERS ===========
+    window.addEventListener('error', (e)=> console.error('JS Error:', e.message, e.filename, e.lineno, e.colno, e.error));
+    window.addEventListener('unhandledrejection', (e)=> console.error('Promise Rejection:', e.reason));
+
+    // ================== AUTH ==================
     async function updateSession(){
-      const { data: { session } } = await supabase.auth.getSession();
-      const logged = !!session;
-      authCard.classList.toggle('hidden', logged);
-      dashboard.classList.toggle('hidden', !logged);
-      logoutBtn.classList.toggle('hidden', !logged);
-      if (logged) await loadPage();
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) console.error('getSession error:', error);
+        const logged = !!session;
+        authCard.classList.toggle('hidden', logged);
+        dashboard.classList.toggle('hidden', !logged);
+        logoutBtn.classList.toggle('hidden', !logged);
+        if (logged) await loadPage();
+      } catch (err) {
+        console.error('updateSession()', err);
+      }
     }
 
     loginBtn.addEventListener('click', async ()=>{
       authMsg.classList.add('hidden'); authMsg.textContent='';
       const e = email.value.trim(); const p = password.value;
       if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
-      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
-      if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
-      await updateSession();
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
+        if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
+        await updateSession();
+      } catch (err) {
+        authMsg.textContent = String(err); authMsg.classList.remove('hidden');
+        console.error('signInWithPassword()', err);
+      }
     });
 
-    logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
+    logoutBtn.addEventListener('click', async ()=>{ try { await supabase.auth.signOut(); } finally { await updateSession(); } });
     await updateSession();
 
-    // SELECT/QUERY HELPERS
+    // ========== SELECT HELPERS ==========
     function baseSelect(){
       return supabase.from(TABLE).select(
         'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar'
@@ -335,40 +323,51 @@
       return q;
     }
 
-    // CARDS
+    // ========== CARDS ==========
     async function loadCards(){
-      let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
-      const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
+      try {
+        let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
+        const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
 
-      let qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
-      const { count: onCount } = await qOn; cardOnline.textContent = onCount || 0;
+        let qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
+        const { count: onCount } = await qOn; cardOnline.textContent = onCount || 0;
 
-      let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
-      const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
+        let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
+        const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
 
-      const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
-      const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
-      cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
-    }
-
-    // PAGE LOAD
-    async function loadPage(){
-      const limit = parseInt(limitSel.value,10) || 50;
-      const from = (page-1)*limit; const to = from + limit - 1;
-
-      await loadCards();
-
-      let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
-      const { data, error } = await q;
-      if(error){
-        rows.innerHTML = `<tr><td class="px-3 py-2 text-red-500">${error.message}</td></tr>`;
-        return;
+        const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
+        const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
+        if (sumErr) { console.warn('sum_wcoin_filtered error:', sumErr.message); }
+        cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
+      } catch (err) {
+        console.error('loadCards()', err);
       }
-      renderRows(data || []);
-      pageLbl.textContent = `Página ${page}`;
     }
 
-    // MODAL DELETE
+    // ========== PAGE LOAD ==========
+    async function loadPage(){
+      try {
+        const limit = parseInt(limitSel.value,10) || 50;
+        const from = (page-1)*limit; const to = from + limit - 1;
+
+        await loadCards();
+
+        let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
+        const { data, error } = await q;
+        if(error){
+          rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
+          console.error('query error:', error);
+          return;
+        }
+        renderRows(data || []);
+        pageLbl.textContent = `Página ${page}`;
+      } catch (err) {
+        console.error('loadPage()', err);
+        rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>Falha ao carregar.</td></tr>`;
+      }
+    }
+
+    // ========== MODAL DELETE ==========
     let pendingDeleteId = null;
     const delModal = document.getElementById('delModal');
     const closeModal = document.getElementById('closeModal');
@@ -376,17 +375,19 @@
     const confirmDel = document.getElementById('confirmDel');
     function openDelModal(id){ pendingDeleteId = id; delModal.classList.add('show'); }
     function closeDelModal(){ delModal.classList.remove('show'); pendingDeleteId = null; }
-    if (closeModal) closeModal.addEventListener('click', closeDelModal);
-    if (cancelDel) cancelDel.addEventListener('click', closeDelModal);
-    if (confirmDel) confirmDel.addEventListener('click', async ()=>{
+    closeModal.addEventListener('click', closeDelModal);
+    cancelDel.addEventListener('click', closeDelModal);
+    confirmDel.addEventListener('click', async ()=>{
       if(!pendingDeleteId) return;
-      const { error } = await supabase.from(TABLE).delete().eq('id', pendingDeleteId);
-      if(error){ alert('Erro ao excluir: '+error.message); return; }
-      const tr = rows.querySelector(`tr[data-id="${pendingDeleteId}"]`); if(tr) tr.remove();
-      closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
+      try {
+        const { error } = await supabase.from(TABLE).delete().eq('id', pendingDeleteId);
+        if(error){ alert('Erro ao excluir: '+error.message); return; }
+        const tr = rows.querySelector(`tr[data-id="${pendingDeleteId}"]`); if(tr) tr.remove();
+        closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
+      } catch (err) { console.error('delete row', err); }
     });
 
-    // RENDER ROWS
+    // ========== RENDER ROWS ==========
     const iconCopy = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
     function renderRows(items){
@@ -443,9 +444,7 @@
       `).join('');
     }
 
-    // EVENTOS NO TBODY (delegação)
-
-    // Copiar usuário
+    // ========== EVENTOS NO TBODY ==========
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyUserBtn'); if(!btn) return;
       const tr = btn.closest('tr'); const user = tr.querySelector('td:nth-child(1) span').innerText.trim();
@@ -453,7 +452,6 @@
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
 
-    // Copiar senha
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyPassBtn'); if(!btn) return;
       const tr = btn.closest('tr'); const pass = tr.querySelector('td:nth-child(2) span').innerText.trim();
@@ -461,13 +459,11 @@
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
 
-    // Excluir
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.delBtn'); if(!btn) return;
       const tr = btn.closest('tr'); openDelModal(tr.getAttribute('data-id'));
     });
 
-    // ONLINE
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('onlineToggle')) return;
@@ -480,7 +476,6 @@
       if(sort.field === 'online'){ await loadPage(); }
     });
 
-    // FLAG
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('flagToggle')) return;
@@ -493,7 +488,6 @@
       if(sort.field === 'flag'){ await loadPage(); }
     });
 
-    // OLHAR
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('olharToggle')) return;
@@ -504,7 +498,6 @@
       tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Rapelado: '+error.message); return; }
     });
 
-    // S1..S7
     rows.addEventListener('change', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('sChk')) return;
@@ -516,7 +509,6 @@
       tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
     });
 
-    // TAG4
     rows.addEventListener('blur', async (ev)=>{
       const el = ev.target;
       if(!el.classList.contains('tagInput')) return;
@@ -526,18 +518,19 @@
       const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
     }, true);
+
     rows.addEventListener('keydown', (ev)=>{
       const el = ev.target; if(!el.classList.contains('tagInput')) return;
       if(ev.key !== 'Enter') return; ev.preventDefault(); el.blur();
     });
 
-    // AÇÕES
+    // ========== AÇÕES ==========
     applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-    // SORT
+    // ========== SORT ==========
     thWcoin.addEventListener('click', ()=>{
       if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; } else { sort.asc = !sort.asc; }
       hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
@@ -563,7 +556,7 @@
       page = 1; loadPage();
     });
 
-    // REALTIME
+    // ========== REALTIME ==========
     try {
       supabase.channel('realtime:webzen_cache_raw')
         .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
