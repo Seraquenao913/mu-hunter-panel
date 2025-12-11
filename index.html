@@ -507,14 +507,14 @@
               '<div class="flex items-center gap-2">'+
                 '<span class="text-xs text-zinc-500">'+formatDate(r.inserted_at)+'</span>'+
                 '<span class="text-zinc-600">┊</span>'+
-                '<span>'+(r.f1 ?? '')+'</span>'+
+                '<span class="uval">'+(r.f1 ?? '')+'</span>'+
                 '<button class="iconbtn copyUserBtn" title="Copiar usuário">'+iconCopySvg+'</button>'+
               '</div>'+
             '</td>'+
 
             '<td class="px-3 py-2 whitespace-nowrap">'+
               '<div class="flex items-center gap-2">'+
-                '<span>'+(r.f2 ?? '')+'</span>'+
+                '<span class="pval">'+(r.f2 ?? '')+'</span>'+
                 '<button class="iconbtn copyPassBtn" title="Copiar senha">'+iconCopySvg+'</button>'+
               '</div>'+
             '</td>'+
@@ -557,7 +557,7 @@
     // Copiar usuário
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyUserBtn'); if(!btn) return;
-      const tr = btn.closest('tr'); const user = tr.querySelector('td:nth-child(1) span').innerText.trim();
+      const tr = btn.closest('tr'); const user = tr.querySelector('.uval')?.innerText.trim() || '';
       navigator.clipboard.writeText(user);
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
@@ -565,7 +565,7 @@
     // Copiar senha
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyPassBtn'); if(!btn) return;
-      const tr = btn.closest('tr'); const pass = tr.querySelector('td:nth-child(2) span').innerText.trim();
+      const tr = btn.closest('tr'); const pass = tr.querySelector('.pval')?.innerText.trim() || '';
       navigator.clipboard.writeText(pass);
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
@@ -586,6 +586,7 @@
       const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
       el.dataset.prev = next ? 'true' : 'false';
+      await loadUserEditsPie();
       if(sort.field === 'online'){ await loadPage(); }
     });
 
@@ -611,6 +612,7 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ olhar: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Rapelado: '+error.message); return; }
+      await loadUserEditsPie();
     });
 
     // S1..S7
@@ -622,7 +624,8 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const update = {}; update[key] = val; update['updated_by'] = updated_by;
       const { error } = await supabase.from(TABLE).update(update).eq('id', id);
-      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); return; }
+      await loadUserEditsPie();
     });
 
     // TAG16
