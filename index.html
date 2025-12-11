@@ -154,8 +154,11 @@
             <option value="yes">Sim</option>
           </select>
         </div>
-        <div class="flex items-end">
+        <div class="flex items-end gap-2">
           <button id="applyBtn" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">Aplicar</button>
+          <button id="recentBtn" class="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-center gap-1 text-sm">
+            <span>Recentes</span><span class="text-xs">🕒</span>
+          </button>
         </div>
       </div>
 
@@ -259,6 +262,7 @@
     const search = document.getElementById('search');
     const validFilter = document.getElementById('validFilter');
     const applyBtn = document.getElementById('applyBtn');
+    const recentBtn = document.getElementById('recentBtn');
 
     const rows = document.getElementById('rows');
     const prevBtn = document.getElementById('prevBtn');
@@ -309,7 +313,7 @@
     // SELECT/QUERY HELPERS
     function baseSelect(){
       return supabase.from(TABLE).select(
-        'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar'
+        'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar, inserted_at'
       );
     }
     function applyFilters(q){
@@ -341,6 +345,8 @@
         q = q.order('flag', { ascending: !sort.asc });
       } else if (sort.field === 'olhar'){
         q = q.order('olhar', { ascending: !sort.asc });
+      } else if (sort.field === 'inserted_at'){
+        q = q.order('inserted_at', { ascending: sort.asc });
       } else {
         q = q.order('id', { ascending: false });
       }
@@ -399,6 +405,17 @@
     });
 
     // RENDER ROWS
+    function formatDate(ts){
+      if(!ts) return '';
+      const d = new Date(ts);
+      if(isNaN(d.getTime())) return '';
+      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mi = String(d.getMinutes()).padStart(2,'0');
+      return `${dd}/${mm} ${hh}:${mi}`;
+    }
+
     function renderRows(items){
       rows.innerHTML = items.map(r => {
         const sCells = [1,2,3,4,5,6,7].map(n =>
@@ -411,6 +428,8 @@
           '<tr class="hover:bg-zinc-900/60 transition" data-id="'+r.id+'">'+
             '<td class="px-3 py-2 whitespace-nowrap font-medium">'+
               '<div class="flex items-center gap-2">'+
+                '<span class="text-xs text-zinc-500">'+formatDate(r.inserted_at)+'</span>'+
+                '<span class="text-zinc-600">┊</span>'+
                 '<span>'+(r.f1 ?? '')+'</span>'+
                 '<button class="iconbtn copyUserBtn" title="Copiar usuário">'+iconCopySvg+'</button>'+
               '</div>'+
@@ -545,6 +564,12 @@
     });
 
     // AÇÕES
+    recentBtn.addEventListener('click', ()=>{
+      sort = { field: 'inserted_at', asc: false };
+      hintW.textContent='⇅'; hintO.textContent='⇅'; hintF.textContent='⇅'; hintOlhar.textContent='⇅';
+      page = 1;
+      loadPage();
+    });
     applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
