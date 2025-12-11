@@ -14,6 +14,9 @@
   <!-- Supabase JS v2 -->
   <script type="module" crossorigin src="https://esm.sh/@supabase/supabase-js@2"></script>
 
+  <!-- Chart.js para gráfico de pizza -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -162,8 +165,23 @@
         </div>
       </div>
 
-      <!-- Cards -->
-      <div class="grid md:grid-cols-4 gap-3 mb-4">
+      <!-- Cards + Gráfico -->
+      <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
+        <!-- Gráfico de pizza à esquerda -->
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-2 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
+            <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
+          </div>
+          <div class="flex-1">
+            <canvas id="userEditsPie" class="w-full h-56"></canvas>
+          </div>
+          <p class="mt-2 text-xs text-zinc-500">
+            Cada fatia mostra quantas linhas cada login alterou (<code>updated_by</code>).
+          </p>
+        </div>
+
+        <!-- Cards à direita -->
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
           <div class="text-sm text-zinc-400">Total filtrado</div>
           <div id="cardTotal" class="text-2xl font-bold">0</div>
@@ -283,6 +301,9 @@
     const hintO = document.getElementById('hintO');
     const hintF = document.getElementById('hintF');
     const hintOlhar = document.getElementById('hintOlhar');
+    const userEditsPieCanvas = document.getElementById('userEditsPie');
+    const pieTotalEditsLbl = document.getElementById('pieTotalEditsLbl');
+    let userEditsChart = null;
 
     localStorage.setItem('theme','dark');
     let page = 1;
@@ -295,7 +316,10 @@
       authCard.classList.toggle('hidden', logged);
       dashboard.classList.toggle('hidden', !logged);
       logoutBtn.classList.toggle('hidden', !logged);
-      if (logged) await loadPage();
+      if (logged) {
+        await loadPage();
+        await loadUserEditsPie();
+      }
     }
 
     loginBtn.addEventListener('click', async ()=>{
@@ -368,6 +392,59 @@
       const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
       cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
     }
+    async function loadUserEditsPie(){
+      if (!userEditsPieCanvas) return;
+
+      const { data, error } = await supabase.rpc('get_update_stats');
+      if (error) {
+        console.warn('Erro ao carregar estatísticas de usuários:', error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        if (userEditsChart) {
+          userEditsChart.destroy();
+          userEditsChart = null;
+        }
+        pieTotalEditsLbl.textContent = '0 alterações';
+        return;
+      }
+
+      const labels = data.map(r => r.user_email || (r.user_id ?? 'desconhecido'));
+      const values = data.map(r => Number(r.total_edits || r.total || 0));
+      const total = values.reduce((a, b) => a + b, 0);
+
+      pieTotalEditsLbl.textContent = `${total} alterações`;
+
+      const ctx = userEditsPieCanvas.getContext('2d');
+      if (userEditsChart) {
+        userEditsChart.destroy();
+      }
+
+      userEditsChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data: values
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: {
+                color: '#e4e4e7',
+                font: { size: 11 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+
 
     // PAGE LOAD
     async function loadPage(){
