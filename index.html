@@ -140,30 +140,30 @@
         <button id="loginBtn" class="w-full py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">Entrar</button>
         <p id="authMsg" class="text-sm text-red-400 hidden"></p>
       </div>
-      </div>
-</div>
+        </div>
+  </div>
 </section>
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-<div class="grid md:grid-cols-12 gap-4 items-start">
+  <div class="flex flex-col md:flex-row gap-4 items-start">
 
-  <aside class="md:col-span-3 space-y-4">
-    <div class="card p-3">
-      <div class="flex items-center justify-between mb-2">
-        <div class="font-semibold text-sm">Modificações por usuário</div>
-        <div id="pieTotalEdits" class="text-xs text-slate-400"></div>
+    <aside class="md:w-80 shrink-0 space-y-4">
+      <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
+          <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
+        </div>
+        <div class="flex-1" style="height:180px;">
+          <canvas id="userEditsPie" class="w-full"></canvas>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500">
+          Conta 1 por linha (online/itens/tag/rapelado/s1–s7) por minuto.
+        </p>
       </div>
-      <div style="height:180px;">
-        <canvas id="userEditsPie"></canvas>
-      </div>
-      <div class="text-[11px] text-slate-500 mt-2">
-        Conta 1 por linha (online/itens/tag/rapelado/s1–s7) por minuto.
-      </div>
-    </div>
-  </aside>
+    </aside>
 
-  <div class="md:col-span-9 space-y-4">
+    <div class="flex-1">
 
       <!-- Filtros -->
       <div class="grid md:grid-cols-4 gap-3 mb-4">
@@ -189,20 +189,7 @@
       <!-- Cards + Gráfico -->
       <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
         <!-- Gráfico de pizza à esquerda -->
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-2 flex flex-col">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
-            <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
-          </div>
-          <div class="flex-1">
-            <canvas id="userEditsPie" class="w-full h-56"></canvas>
-          </div>
-          <p class="mt-2 text-xs text-zinc-500">
-            Cada fatia mostra quantas linhas cada login alterou (<code>updated_by</code>).
-          </p>
-        </div>
-
-        <!-- Cards à direita -->
+<!-- Cards à direita -->
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
           <div class="text-sm text-zinc-400">Total filtrado</div>
           <div id="cardTotal" class="text-2xl font-bold">0</div>
@@ -427,7 +414,7 @@
           userEditsChart.destroy();
           userEditsChart = null;
         }
-        pieTotalEditsLbl.textContent = '0 ações';
+        pieTotalEditsLbl.textContent = '0 alterações';
         return;
       }
 
