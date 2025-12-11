@@ -140,10 +140,31 @@
         <button id="loginBtn" class="w-full py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">Entrar</button>
         <p id="authMsg" class="text-sm text-red-400 hidden"></p>
       </div>
-    </section>
+      </div>
+</div>
+</section>
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
+<div class="grid md:grid-cols-12 gap-4 items-start">
+
+  <aside class="md:col-span-3 space-y-4">
+    <div class="card p-3">
+      <div class="flex items-center justify-between mb-2">
+        <div class="font-semibold text-sm">Modificações por usuário</div>
+        <div id="pieTotalEdits" class="text-xs text-slate-400"></div>
+      </div>
+      <div style="height:180px;">
+        <canvas id="userEditsPie"></canvas>
+      </div>
+      <div class="text-[11px] text-slate-500 mt-2">
+        Conta 1 por linha (online/itens/tag/rapelado/s1–s7) por minuto.
+      </div>
+    </div>
+  </aside>
+
+  <div class="md:col-span-9 space-y-4">
+
       <!-- Filtros -->
       <div class="grid md:grid-cols-4 gap-3 mb-4">
         <div class="col-span-2">
@@ -406,7 +427,7 @@
           userEditsChart.destroy();
           userEditsChart = null;
         }
-        pieTotalEditsLbl.textContent = '0 alterações';
+        pieTotalEditsLbl.textContent = '0 ações';
         return;
       }
 
