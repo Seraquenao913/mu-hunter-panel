@@ -1,370 +1,575 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>WebZen Cache - Painel</title>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Tailwind CDN -->
+  <title>Account Mu Hunter Panel</title>
+
+  <script>document.documentElement.classList.add('dark');</script>
+
+  <!-- Tailwind (ok para dev) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+
+  <!-- Supabase JS v2 -->
+  <script type="module" crossorigin src="https://esm.sh/@supabase/supabase-js@2"></script>
+
+  <style>
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+              background-color: #3f3f46; transition: .2s; border-radius: 9999px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+                     background-color: white; transition: .2s; border-radius: 9999px; }
+    input:checked + .slider { background-color: #10b981; }
+    input:focus + .slider { box-shadow: 0 0 1px #10b981; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable .hint { opacity: .6; font-size: 12px; margin-left: 4px; }
+
+    .saving { opacity: .55; pointer-events: none; transition: opacity .15s ease; }
+    .tagbox { width: 16ch; text-transform: uppercase; } /* 16 caracteres visuais */
+
+    .title-gradient {
+      background: linear-gradient(90deg, #a78bfa, #60a5fa 35%, #34d399 70%, #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .glass {
+      backdrop-filter: saturate(180%) blur(6px);
+      background-color: rgba(24,24,27,.5);
+    }
+
+    .modal-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+                     background: rgba(0,0,0,.6); z-index: 50; }
+    .modal { width: 100%; max-width: 420px; border-radius: 16px; background: #0a0a0a; border: 1px solid #27272a;
+             box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    .modal header { padding: 14px 16px; border-bottom: 1px solid #27272a;}
+    .modal .content { padding: 16px; }
+    .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
+    .show { display: flex; }
+
+    /* Checkbox custom VERMELHO */
+    .cbfx {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border: 1px solid rgb(255, 70, 70);
+      border-radius: 3px;
+      background: rgba(0,0,0,0);
+      box-shadow: rgba(0,0,0,0.09) 0 5px 18px -12px;
+      box-sizing: border-box;
+      cursor: pointer;
+      display: inline-block;
+      vertical-align: middle;
+      transition: color .15s ease-in-out,
+                  background-color .15s ease-in-out,
+                  border-color .15s ease-in-out,
+                  box-shadow .15s ease-in-out,
+                  transform .12s ease-in-out;
+    }
+    .cbfx:hover { box-shadow: rgba(255,70,70,.45) 0 0 0 2px inset; }
+    .cbfx:active { transform: scale(0.95); }
+    .cbfx:checked { background-color: rgb(255,70,70); border-color: rgb(255,70,70); }
+    .cbfx:checked::after {
+      content: "";
+      position: relative;
+      display: block;
+      width: 10px;
+      height: 5px;
+      margin: 5px auto 0;
+      border: 2px solid #fff;
+      border-top: 0;
+      border-right: 0;
+      transform: rotate(-45deg);
+    }
+    .cbfx:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,70,70,.35); }
+
+    /* Botões-ícones pequenos */
+    .iconbtn {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:26px; height:26px; border-radius:8px;
+      background:#3f3f46; color:#e4e4e7; border:1px solid #27272a;
+      transition:transform .12s ease, background .15s ease;
+    }
+    .iconbtn:hover { background:#52525b; }
+    .iconbtn:active { transform:scale(.96); }
+    .icon { width:16px; height:16px; display:block; }
+  </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
-  <div class="max-w-6xl mx-auto px-4 py-6">
+
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <div id="app" class="max-w-7xl mx-auto p-4">
+
     <!-- Header -->
-    <header class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">WebZen Cache</h1>
-        <p class="text-sm text-slate-400">Painel de contas &amp; cache + seção de recentes</p>
-      </div>
-      <!-- Placeholder de status / usuário -->
-      <div class="text-right text-xs text-slate-400">
-        <span id="auth-status">autenticado via Supabase</span>
+    <header class="mb-6">
+      <div class="rounded-2xl glass border border-zinc-800 p-6 text-center shadow">
+        <div class="flex items-center justify-between">
+          <div class="w-12"></div>
+          <div>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
+              Account Mu Hunter Panel
+            </h1>
+            <p class="mt-2 text-sm text-zinc-400">gerencie status, tags e controles em tempo real</p>
+          </div>
+          <button id="logoutBtn" class="px-3 py-1.5 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">
+            Sair
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- Tabs -->
-    <div class="border-b border-slate-700 mb-4">
-      <nav class="-mb-px flex space-x-4 text-sm" aria-label="Tabs">
-        <button
-          id="tab-contas"
-          class="border-b-2 border-sky-500 px-3 py-2 font-medium text-sky-400"
-          data-tab-target="section-contas"
-        >
-          Contas
-        </button>
-        <button
-          id="tab-recentes"
-          class="border-b-2 border-transparent px-3 py-2 font-medium text-slate-400 hover:text-slate-200"
-          data-tab-target="section-recentes"
-        >
-          Recentes
-        </button>
-      </nav>
-    </div>
-
-    <!-- SEÇÃO CONTAS (placeholder para seu layout atual) -->
-    <section id="section-contas" class="space-y-4">
-      <!-- Aqui você pode colar o restante do seu front atual (pesquisa, url/login/senha etc.).
-           Mantive algo bem simples apenas pra não quebrar. -->
-      <div class="bg-slate-800/70 border border-slate-700 rounded-2xl p-4">
-        <h2 class="text-base font-semibold mb-2">Pesquisa / Cadastro de Contas</h2>
-        <p class="text-xs text-slate-400 mb-4">
-          Substitua este bloco pelo layout que você já tinha para pesquisa, URL/Login/Senha etc.
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-          <div class="flex flex-col space-y-1">
-            <label for="url" class="text-slate-300">URL</label>
-            <input
-              id="url"
-              type="text"
-              class="bg-slate-900/70 border border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-sky-500"
-              placeholder="https://..."
-            />
-          </div>
-
-          <div class="flex flex-col space-y-1">
-            <label for="login" class="text-slate-300">Login</label>
-            <input
-              id="login"
-              type="text"
-              class="bg-slate-900/70 border border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-sky-500"
-              placeholder="user@example.com"
-            />
-          </div>
-
-          <div class="flex flex-col space-y-1">
-            <label for="senha" class="text-slate-300">Senha</label>
-            <input
-              id="senha"
-              type="text"
-              class="bg-slate-900/70 border border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-sky-500"
-              placeholder="********"
-            />
-          </div>
-        </div>
-
-        <div class="mt-4 flex flex-wrap items-center gap-2 text-xs">
-          <button
-            class="inline-flex items-center rounded-lg border border-sky-500 px-3 py-1.5 text-xs font-medium text-sky-100 hover:bg-sky-500/10"
-          >
-            Salvar / Atualizar
-          </button>
-          <button
-            class="inline-flex items-center rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-600/40"
-          >
-            Limpar
-          </button>
-        </div>
+    <!-- Login -->
+    <section id="authCard" class="max-w-md mx-auto mt-8 bg-zinc-900 border border-zinc-800 shadow rounded-2xl p-6">
+      <h2 class="text-xl font-semibold mb-4">Entrar</h2>
+      <div class="space-y-3">
+        <label class="block">
+          <span class="text-sm text-zinc-300">E-mail</span>
+          <input id="email" type="email" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700" />
+        </label>
+        <label class="block">
+          <span class="text-sm text-zinc-300">Senha</span>
+          <input id="password" type="password" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700" />
+        </label>
+        <button id="loginBtn" class="w-full py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">Entrar</button>
+        <p id="authMsg" class="text-sm text-red-400 hidden"></p>
       </div>
     </section>
 
-    <!-- SEÇÃO RECENTES -->
-    <section id="section-recentes" class="space-y-4 hidden">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-base font-semibold">Recentes</h2>
-        <div class="text-[11px] text-slate-400">
-          Ordenado por <span class="font-semibold">updated_at DESC, inserted_at DESC</span>
+    <!-- Dashboard -->
+    <section id="dashboard" class="hidden">
+      <!-- Filtros -->
+      <div class="grid md:grid-cols-4 gap-3 mb-4">
+        <div class="col-span-2">
+          <label class="text-sm text-zinc-300">Busca (username ou senha)</label>
+          <input id="search" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700" placeholder="ex: andrefirme" />
         </div>
-      </div>
-
-      <!-- Filtros / opções -->
-      <div class="flex flex-wrap items-center gap-3 text-xs">
-        <div class="flex items-center gap-2">
-          <label for="recentes-page-size" class="text-slate-300">Por página:</label>
-          <select
-            id="recentes-page-size"
-            class="bg-slate-900/70 border border-slate-700 rounded-lg px-2 py-1 text-xs"
-          >
-            <option value="10">10</option>
-            <option value="20" selected>20</option>
-            <option value="50">50</option>
+        <div>
+          <label class="text-sm text-zinc-300">Apenas Válidas (f3='valid')</label>
+          <select id="validFilter" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700">
+            <option value="">Não</option>
+            <option value="yes">Sim</option>
           </select>
         </div>
+        <div class="flex items-end">
+          <button id="applyBtn" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">Aplicar</button>
+        </div>
       </div>
 
-      <!-- Card com tabela de recentes -->
-      <div class="bg-slate-800/70 border border-slate-700 rounded-2xl p-3 text-xs">
-        <!-- Header / legend -->
-        <div class="flex items-center justify-between mb-3">
-          <p class="text-[11px] text-slate-400">
-            Exibindo últimas inserções/atualizações da tabela
-            <span class="font-mono text-slate-200">public.webzen_cache_raw</span>
-          </p>
-          <span id="recentes-total" class="text-[11px] text-slate-400">0 registros</span>
+      <!-- Cards -->
+      <div class="grid md:grid-cols-4 gap-3 mb-4">
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Total filtrado</div>
+          <div id="cardTotal" class="text-2xl font-bold">0</div>
         </div>
-
-        <!-- Tabela enxuta -->
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-left align-middle">
-            <thead class="border-b border-slate-700 text-[11px] uppercase tracking-wide text-slate-400">
-              <tr>
-                <th class="py-1.5 pr-3">raw_line</th>
-                <th class="py-1.5 px-3">TAG (tag4)</th>
-                <th class="py-1.5 px-3 text-center">Flag</th>
-                <th class="py-1.5 px-3 text-center">Online</th>
-                <th class="py-1.5 px-3">Olhar</th>
-                <th class="py-1.5 px-3 whitespace-nowrap">Atualizado</th>
-              </tr>
-            </thead>
-            <tbody id="recentes-tbody" class="divide-y divide-slate-800">
-              <!-- Linhas inseridas via JS -->
-            </tbody>
-          </table>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Online (ligado)</div>
+          <div id="cardOnline" class="text-2xl font-bold">0</div>
         </div>
-
-        <!-- Footer / paginação -->
-        <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400">
-          <div id="recentes-range"></div>
-          <div class="flex items-center gap-2">
-            <button
-              id="recentes-prev"
-              class="px-2 py-1 rounded border border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              &larr; Anterior
-            </button>
-            <span id="recentes-page-indicator">Página 1</span>
-            <button
-              id="recentes-next"
-              class="px-2 py-1 rounded border border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Próxima &rarr;
-            </button>
-          </div>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Válidas</div>
+          <div id="cardValid" class="text-2xl font-bold">0</div>
         </div>
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+          <div class="text-sm text-zinc-400">Soma WCoin</div>
+          <div id="cardWSum" class="text-2xl font-bold">0</div>
+        </div>
+      </div>
 
-        <!-- Estado -->
-        <div id="recentes-status" class="mt-2 text-[11px] text-slate-500"></div>
+      <!-- Tabela -->
+      <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
+        <table class="min-w-full text-sm">
+          <thead class="bg-zinc-900 border-b border-zinc-800">
+            <tr>
+              <th class="text-left px-3 py-2">Usuário</th>
+              <th class="text-left px-3 py-2">Senha</th>
+              <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
+              <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
+              <th class="text-left px-3 py-2 sortable" id="thFlag">Itens Pegar <span class="hint" id="hintF">⇅</span></th>
+              <th class="text-center px-2 py-2 w-14 sortable" id="thOlhar">Rapelado <span class="hint" id="hintOlhar">⇅</span></th>
+              <th class="text-center px-2 py-2 w-12">S1</th>
+              <th class="text-center px-2 py-2 w-12">S2</th>
+              <th class="text-center px-2 py-2 w-12">S3</th>
+              <th class="text-center px-2 py-2 w-12">S4</th>
+              <th class="text-center px-2 py-2 w-12">S5</th>
+              <th class="text-center px-2 py-2 w-12">S6</th>
+              <th class="text-center px-2 py-2 w-12">S7</th>
+              <th class="text-center px-3 py-2">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-zinc-800 bg-zinc-950"></tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center gap-2 mt-4">
+        <button id="prevBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">◀</button>
+        <span id="pageLbl" class="text-sm text-zinc-400">Página 1</span>
+        <button id="nextBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">▶</button>
+        <select id="limitSel" class="ml-4 px-2 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">
+          <option>25</option>
+          <option selected>50</option>
+          <option>100</option>
+        </select>
       </div>
     </section>
   </div>
 
-  <!-- Supabase & Lógica -->
+  <!-- Modal de confirmação de exclusão -->
+  <div id="delModal" class="modal-overlay">
+    <div class="modal">
+      <header class="flex items-center justify-between">
+        <h3 class="font-semibold">Excluir registro</h3>
+        <button id="closeModal" class="text-zinc-400 hover:text-zinc-200">✕</button>
+      </header>
+      <div class="content">
+        <p class="text-zinc-300">Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.</p>
+      </div>
+      <div class="actions">
+        <button id="cancelDel" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700">Cancelar</button>
+        <button id="confirmDel" class="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700">Excluir</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/esm/supabase.js";
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // TODO: troque pelos dados reais do seu projeto
-    const supabaseUrl = "https://uwcyvobwgcdyyphafofy.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
+    const TABLE = "webzen_cache_raw";
 
-    // Controle de tabs
-    const tabButtons = document.querySelectorAll("[data-tab-target]");
-    const sections = {
-      "section-contas": document.getElementById("section-contas"),
-      "section-recentes": document.getElementById("section-recentes"),
-    };
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.supabase = supabase;
 
-    tabButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const target = btn.getAttribute("data-tab-target");
+    // Ícone de cópia (definido antes de usar em renderRows)
+    const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
-        // classes de estilo
-        tabButtons.forEach((b) => {
-          if (b === btn) {
-            b.classList.remove("border-transparent", "text-slate-400");
-            b.classList.add("border-sky-500", "text-sky-400");
-          } else {
-            b.classList.add("border-transparent", "text-slate-400");
-            b.classList.remove("border-sky-500", "text-sky-400");
-          }
-        });
+    // NODES
+    const authCard = document.getElementById('authCard');
+    const dashboard = document.getElementById('dashboard');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const authMsg = document.getElementById('authMsg');
 
-        Object.entries(sections).forEach(([id, sec]) => {
-          if (id === target) {
-            sec.classList.remove("hidden");
-          } else {
-            sec.classList.add("hidden");
-          }
-        });
+    const search = document.getElementById('search');
+    const validFilter = document.getElementById('validFilter');
+    const applyBtn = document.getElementById('applyBtn');
 
-        // Se trocar para "Recentes", recarrega
-        if (target === "section-recentes") {
-          loadRecentes(true);
-        }
-      });
-    });
+    const rows = document.getElementById('rows');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pageLbl = document.getElementById('pageLbl');
+    const limitSel = document.getElementById('limitSel');
 
-    // Paginação (Recentes)
-    let recentesPage = 1;
-    let recentesPageSize = 20;
-    let recentesTotal = 0;
+    const cardTotal = document.getElementById('cardTotal');
+    const cardOnline = document.getElementById('cardOnline');
+    const cardValid = document.getElementById('cardValid');
+    const cardWSum = document.getElementById('cardWSum');
 
-    const recentesPageSizeSelect = document.getElementById("recentes-page-size");
-    const recentesPrevBtn = document.getElementById("recentes-prev");
-    const recentesNextBtn = document.getElementById("recentes-next");
-    const recentesTbody = document.getElementById("recentes-tbody");
-    const recentesTotalSpan = document.getElementById("recentes-total");
-    const recentesRangeSpan = document.getElementById("recentes-range");
-    const recentesPageIndicator = document.getElementById("recentes-page-indicator");
-    const recentesStatus = document.getElementById("recentes-status");
+    const thWcoin = document.getElementById('thWcoin');
+    const thOnline = document.getElementById('thOnline');
+    const thFlag = document.getElementById('thFlag');
+    const thOlhar = document.getElementById('thOlhar');
+    const hintW = document.getElementById('hintW');
+    const hintO = document.getElementById('hintO');
+    const hintF = document.getElementById('hintF');
+    const hintOlhar = document.getElementById('hintOlhar');
 
-    recentesPageSizeSelect.addEventListener("change", () => {
-      recentesPageSize = parseInt(recentesPageSizeSelect.value, 10) || 20;
-      recentesPage = 1;
-      loadRecentes(true);
-    });
+    localStorage.setItem('theme','dark');
+    let page = 1;
+    let sort = { field: 'inserted_at', asc: false };
 
-    recentesPrevBtn.addEventListener("click", () => {
-      if (recentesPage > 1) {
-        recentesPage--;
-        loadRecentes();
-      }
-    });
-
-    recentesNextBtn.addEventListener("click", () => {
-      const maxPage = Math.max(1, Math.ceil(recentesTotal / recentesPageSize));
-      if (recentesPage < maxPage) {
-        recentesPage++;
-        loadRecentes();
-      }
-    });
-
-    function formatDateTime(iso) {
-      if (!iso) return "-";
-      try {
-        const d = new Date(iso);
-        if (Number.isNaN(d.getTime())) return "-";
-        const dia = d.toLocaleDateString("pt-BR");
-        const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-        return `${dia} ${hora}`;
-      } catch {
-        return iso;
-      }
+    // AUTH
+    async function updateSession(){
+      const { data: { session } } = await supabase.auth.getSession();
+      const logged = !!session;
+      authCard.classList.toggle('hidden', logged);
+      dashboard.classList.toggle('hidden', !logged);
+      logoutBtn.classList.toggle('hidden', !logged);
+      if (logged) await loadPage();
     }
 
-    async function loadRecentes(forceReset = false) {
-      recentesStatus.textContent = "Carregando recentes...";
-      recentesStatus.classList.remove("text-red-400");
-      recentesStatus.classList.add("text-slate-500");
+    loginBtn.addEventListener('click', async ()=>{
+      authMsg.classList.add('hidden'); authMsg.textContent='';
+      const e = email.value.trim(); const p = password.value;
+      if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
+      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
+      if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
+      await updateSession();
+    });
 
-      const from = (recentesPage - 1) * recentesPageSize;
-      const to = from + recentesPageSize - 1;
+    logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
+    await updateSession();
 
-      // Ordem: primeiro updated_at desc (quando existir), depois inserted_at desc
-      const query = supabase
-        .from("webzen_cache_raw")
-        .select("*", { count: "exact" })
-        .order("updated_at", { ascending: false, nullsFirst: false })
-        .order("inserted_at", { ascending: false })
-        .range(from, to);
+    // SELECT/QUERY HELPERS
+    function baseSelect(){
+      return supabase.from(TABLE).select(
+        'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar'
+      );
+    }
+    function applyFilters(q){
+      const s = search.value.trim();
+      const valid = validFilter.value;
+      if(s){ q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`); }
+      if(valid === 'yes'){ q = q.eq('f3', 'valid'); }
+      return q;
+    }
+    function applySort(q){
+      if (sort.field === 'wcoin_int'){
+        q = q.order('wcoin_int', { ascending: sort.asc, nullsFirst: false });
+      } else if (sort.field === 'online'){
+        q = q.order('online', { ascending: !sort.asc });
+      } else if (sort.field === 'flag'){
+        q = q.order('flag', { ascending: !sort.asc });
+      } else if (sort.field === 'olhar'){
+        q = q.order('olhar', { ascending: !sort.asc });
+      } else {
+        q = q.order('id', { ascending: false });
+      }
+      return q;
+    }
 
-      const { data, error, count } = await query;
+    // CARDS
+    async function loadCards(){
+      let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
+      const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
 
-      if (error) {
-        console.error(error);
-        recentesStatus.textContent = "Erro ao carregar recentes: " + (error.message || error);
-        recentesStatus.classList.remove("text-slate-500");
-        recentesStatus.classList.add("text-red-400");
+      let qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
+      const { count: onCount } = await qOn; cardOnline.textContent = onCount || 0;
+
+      let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
+      const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
+
+      const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
+      const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
+      cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
+    }
+
+    // PAGE LOAD
+    async function loadPage(){
+      const limit = parseInt(limitSel.value,10) || 50;
+      const from = (page-1)*limit; const to = from + limit - 1;
+
+      await loadCards();
+
+      let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
+      const { data, error } = await q;
+      if(error){
+        rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
         return;
       }
-
-      recentesTotal = count ?? 0;
-      recentesTbody.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="6" class="py-3 text-center text-[11px] text-slate-500">
-          Nenhum registro encontrado.
-        </td>`;
-        recentesTbody.appendChild(tr);
-      } else {
-        for (const row of data) {
-          const tr = document.createElement("tr");
-          tr.className = "hover:bg-slate-800/70";
-          const rawLine = (row.raw_line || "").toString();
-          const tag4 = (row.tag4 || "").toString();
-          const flag = row.flag ?? "";
-          const online = row.online === true || row.online === 1 ? "Sim" : "Não";
-          const olhar = (row.olhar || "").toString();
-          const updated = row.updated_at || row.inserted_at;
-
-          tr.innerHTML = `
-            <td class="py-1.5 pr-3 align-top max-w-xs">
-              <div class="truncate" title="${rawLine.replace(/"/g, "&quot;")}">
-                ${rawLine || "-"}
-              </div>
-            </td>
-            <td class="py-1.5 px-3 align-top whitespace-nowrap font-mono text-[11px]">
-              ${tag4 || "-"}
-            </td>
-            <td class="py-1.5 px-3 align-top text-center">
-              ${flag || "-"}
-            </td>
-            <td class="py-1.5 px-3 align-top text-center">
-              ${online}
-            </td>
-            <td class="py-1.5 px-3 align-top max-w-[160px]">
-              <div class="truncate" title="${olhar.replace(/"/g, "&quot;")}">
-                ${olhar || "-"}
-              </div>
-            </td>
-            <td class="py-1.5 px-3 align-top whitespace-nowrap">
-              ${formatDateTime(updated)}
-            </td>
-          `;
-
-          recentesTbody.appendChild(tr);
-        }
-      }
-
-      // Atualiza textos de range + paginação
-      const start = recentesTotal === 0 ? 0 : from + 1;
-      const end = Math.min(recentesTotal, to + 1);
-      recentesRangeSpan.textContent = `Mostrando ${start}–${end} de ${recentesTotal}`;
-      recentesTotalSpan.textContent = `${recentesTotal} registros`;
-
-      const maxPage = Math.max(1, Math.ceil(recentesTotal / recentesPageSize));
-      recentesPageIndicator.textContent = `Página ${recentesPage} de ${maxPage}`;
-
-      recentesPrevBtn.disabled = recentesPage <= 1;
-      recentesNextBtn.disabled = recentesPage >= maxPage;
-
-      recentesStatus.textContent = `Última atualização: ${formatDateTime(new Date().toISOString())}`;
+      renderRows(data || []);
+      pageLbl.textContent = `Página ${page}`;
     }
 
-    // Carrega "Recentes" pelo menos uma vez se o usuário clicar na aba.
-    // Se quiser carregar na inicialização, basta descomentar:
-    // loadRecentes(true);
+    // MODAL DELETE
+    let pendingDeleteId = null;
+    const delModal = document.getElementById('delModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelDel = document.getElementById('cancelDel');
+    const confirmDel = document.getElementById('confirmDel');
+    function openDelModal(id){ pendingDeleteId = id; delModal.classList.add('show'); }
+    function closeDelModal(){ delModal.classList.remove('show'); pendingDeleteId = null; }
+    closeModal.addEventListener('click', closeDelModal);
+    cancelDel.addEventListener('click', closeDelModal);
+    confirmDel.addEventListener('click', async ()=>{
+      if(!pendingDeleteId) return;
+      const { error } = await supabase.from(TABLE).delete().eq('id', pendingDeleteId);
+      if(error){ alert('Erro ao excluir: '+error.message); return; }
+      const tr = rows.querySelector(`tr[data-id="${pendingDeleteId}"]`); if(tr) tr.remove();
+      closeDelModal(); await loadCards(); if(sort.field){ await loadPage(); }
+    });
+
+    // RENDER ROWS
+    function renderRows(items){
+      rows.innerHTML = items.map(r => {
+        const sCells = [1,2,3,4,5,6,7].map(n =>
+          '<td class="px-3 py-2 text-center">'+
+            '<input type="checkbox" class="sChk cbfx" data-s="'+n+'" '+(r['s'+n] ? 'checked' : '')+'/>' +
+          '</td>'
+        ).join('');
+
+        return (
+          '<tr class="hover:bg-zinc-900/60 transition" data-id="'+r.id+'">'+
+            '<td class="px-3 py-2 whitespace-nowrap font-medium">'+
+              '<div class="flex items-center gap-2">'+
+                '<span>'+(r.f1 ?? '')+'</span>'+
+                '<button class="iconbtn copyUserBtn" title="Copiar usuário">'+iconCopySvg+'</button>'+
+              '</div>'+
+            '</td>'+
+
+            '<td class="px-3 py-2 whitespace-nowrap">'+
+              '<div class="flex items-center gap-2">'+
+                '<span>'+(r.f2 ?? '')+'</span>'+
+                '<button class="iconbtn copyPassBtn" title="Copiar senha">'+iconCopySvg+'</button>'+
+              '</div>'+
+            '</td>'+
+
+            '<td class="px-3 py-2 whitespace-nowrap">'+(r.wcoin_int ?? 0)+'</td>'+
+
+            '<td class="px-3 py-2 whitespace-nowrap">'+
+              '<label class="switch">'+
+                '<input type="checkbox" class="onlineToggle" data-prev="'+(r.online ? 'true' : 'false')+'" '+(r.online ? 'checked' : '')+'>'+
+                '<span class="slider"></span>'+
+              '</label>'+
+            '</td>'+
+
+            '<td class="px-3 py-2 whitespace-nowrap">'+
+              '<div class="flex items-center gap-2">'+
+                '<label class="switch">'+
+                  '<input type="checkbox" class="flagToggle" data-prev="'+(r.flag ? 'true' : 'false')+'" '+(r.flag ? 'checked' : '')+'>'+
+                  '<span class="slider"></span>'+
+                '</label>'+
+                '<input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700" maxlength="16" value="'+(r.tag4 ? r.tag4 : '')+'" placeholder="TAG">'+
+              '</div>'+
+            '</td>'+
+
+            '<td class="px-3 py-2 text-center">'+
+              '<input type="checkbox" class="olharToggle cbfx" '+(r.olhar ? 'checked' : '')+'/>' +
+            '</td>'+
+
+            sCells +
+
+            '<td class="px-3 py-2 whitespace-nowrap text-center">'+
+              '<button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>'+
+            '</td>'+
+          '</tr>'
+        );
+      }).join('');
+    }
+
+    // EVENTOS NO TBODY (delegação)
+
+    // Copiar usuário
+    rows.addEventListener('click', (ev)=>{
+      const btn = ev.target.closest('.copyUserBtn'); if(!btn) return;
+      const tr = btn.closest('tr'); const user = tr.querySelector('td:nth-child(1) span').innerText.trim();
+      navigator.clipboard.writeText(user);
+      btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
+    });
+
+    // Copiar senha
+    rows.addEventListener('click', (ev)=>{
+      const btn = ev.target.closest('.copyPassBtn'); if(!btn) return;
+      const tr = btn.closest('tr'); const pass = tr.querySelector('td:nth-child(2) span').innerText.trim();
+      navigator.clipboard.writeText(pass);
+      btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
+    });
+
+    // Excluir
+    rows.addEventListener('click', (ev)=>{
+      const btn = ev.target.closest('.delBtn'); if(!btn) return;
+      const tr = btn.closest('tr'); openDelModal(tr.getAttribute('data-id'));
+    });
+
+    // ONLINE
+    rows.addEventListener('change', async (ev)=>{
+      const el = ev.target;
+      if(!el.classList.contains('onlineToggle')) return;
+      const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+      const prev = el.dataset.prev === 'true'; const next = el.checked;
+      const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
+      const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
+      tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
+      el.dataset.prev = next ? 'true' : 'false';
+      if(sort.field === 'online'){ await loadPage(); }
+    });
+
+    // FLAG
+    rows.addEventListener('change', async (ev)=>{
+      const el = ev.target;
+      if(!el.classList.contains('flagToggle')) return;
+      const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+      const prev = el.dataset.prev === 'true'; const next = el.checked;
+      const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
+      const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
+      tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
+      el.dataset.prev = next ? 'true':'false';
+      if(sort.field === 'flag'){ await loadPage(); }
+    });
+
+    // OLHAR
+    rows.addEventListener('change', async (ev)=>{
+      const el = ev.target;
+      if(!el.classList.contains('olharToggle')) return;
+      const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+      const next = el.checked;
+      const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
+      const { error } = await supabase.from(TABLE).update({ olhar: next, updated_by }).eq('id', id);
+      tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Rapelado: '+error.message); return; }
+    });
+
+    // S1..S7
+    rows.addEventListener('change', async (ev)=>{
+      const el = ev.target;
+      if(!el.classList.contains('sChk')) return;
+      const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+      const key = 's' + el.getAttribute('data-s'); const val = el.checked;
+      const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
+      const update = {}; update[key] = val; update['updated_by'] = updated_by;
+      const { error } = await supabase.from(TABLE).update(update).eq('id', id);
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
+    });
+
+    // TAG16
+    rows.addEventListener('blur', async (ev)=>{
+      const el = ev.target;
+      if(!el.classList.contains('tagInput')) return;
+      const tr = el.closest('tr'); tr.classList.add('saving'); const id = tr.getAttribute('data-id');
+      const v = (el.value || '').toUpperCase().slice(0,16); el.value = v;
+      const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
+      const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
+    }, true);
+    rows.addEventListener('keydown', (ev)=>{
+      const el = ev.target; if(!el.classList.contains('tagInput')) return;
+      if(ev.key !== 'Enter') return; ev.preventDefault(); el.blur();
+    });
+
+    // AÇÕES
+    applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
+    prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
+    nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
+    limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
+
+    // SORT
+    thWcoin.addEventListener('click', ()=>{
+      if(sort.field !== 'wcoin_int'){ sort = { field: 'wcoin_int', asc: false }; } else { sort.asc = !sort.asc; }
+      hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
+      hintO.textContent = '⇅'; hintF.textContent = '⇅'; hintOlhar.textContent = '⇅';
+      page = 1; loadPage();
+    });
+    thOnline.addEventListener('click', ()=>{
+      if(sort.field !== 'online'){ sort = { field: 'online', asc: false }; } else { sort.asc = !sort.asc; }
+      hintO.textContent = sort.field==='online' ? (sort.asc?'↑':'↓') : '⇅';
+      hintW.textContent = '⇅'; hintF.textContent = '⇅'; hintOlhar.textContent = '⇅';
+      page = 1; loadPage();
+    });
+    thFlag.addEventListener('click', ()=>{
+      if(sort.field !== 'flag'){ sort = { field: 'flag', asc: false }; } else { sort.asc = !sort.asc; }
+      hintF.textContent = sort.field==='flag' ? (sort.asc?'↑':'↓') : '⇅';
+      hintW.textContent = '⇅'; hintO.textContent = '⇅'; hintOlhar.textContent = '⇅';
+      page = 1; loadPage();
+    });
+    thOlhar.addEventListener('click', ()=>{
+      if(sort.field !== 'olhar'){ sort = { field: 'olhar', asc: false }; } else { sort.asc = !sort.asc; }
+      hintOlhar.textContent = sort.field==='olhar' ? (sort.asc?'↑':'↓') : '⇅';
+      hintW.textContent = '⇅'; hintO.textContent = '⇅'; hintF.textContent = '⇅';
+      page = 1; loadPage();
+    });
+
+    // REALTIME
+    try {
+      supabase.channel('realtime:webzen_cache_raw')
+        .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
+        .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, async ()=>{ await loadCards(); if(['online','flag','olhar'].includes(sort.field)){ await loadPage(); } })
+        .subscribe();
+    } catch(err){ console.warn('Realtime indisponível:', err); }
   </script>
 </body>
 </html>
