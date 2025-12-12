@@ -431,7 +431,7 @@
       const takeWindows = (seq) => {
         const s = seq;
         const L = s.length;
-        const lens = [7,6,5]; // mais específico
+        const lens = [6,5,4]; // mais específico
         for(const k of lens){
           if(L < k) continue;
           pushUnique(tokens, s.slice(0,k));
