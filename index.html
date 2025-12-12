@@ -165,23 +165,28 @@
         </div>
       </div>
 
-      <!-- Cards + Gráfico -->
-      <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
-        <!-- Gráfico de pizza à esquerda -->
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-2 flex flex-col">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
-            <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
-          </div>
-          <div class="flex-1">
-            <canvas id="userEditsPie" class="w-full h-56"></canvas>
-          </div>
-          <p class="mt-2 text-xs text-zinc-500">
-            Cada fatia mostra quantas linhas cada login alterou (<code>updated_by</code>).
-          </p>
+      <!-- Layout: gráfico fora do corpo + corpo centralizado -->
+<div class="max-w-7xl mx-auto">
+  <div class="flex flex-col lg:flex-row gap-6 items-start justify-center">
+    <!-- Sidebar (fora do corpo) -->
+    <aside class="w-full lg:w-60 lg:sticky lg:top-6 shrink-0">
+      <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
+          <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
         </div>
+        <div style="height:160px;">
+          <canvas id="userEditsPie" class="w-full h-full"></canvas>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500">
+          Cada fatia mostra quantas <b>linhas marcadas</b> estão atribuídas ao usuário (<code>marked_by</code>).
+        </p>
+      </div>
+    </aside>
 
-        <!-- Cards à direita -->
+    <!-- Corpo (tudo o resto) -->
+    <div class="flex-1 min-w-0">
+      <div class="grid md:grid-cols-4 gap-3 mb-4 items-stretch">
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
           <div class="text-sm text-zinc-400">Total filtrado</div>
           <div id="cardTotal" class="text-2xl font-bold">0</div>
@@ -197,6 +202,9 @@
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
           <div class="text-sm text-zinc-400">Soma WCoin</div>
           <div id="cardWSum" class="text-2xl font-bold">0</div>
+        </div>
+      </div>
+          </div>
         </div>
       </div>
 
@@ -262,7 +270,14 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage,
+      }
+    });
     window.supabase = supabase;
 
     // Ícone de cópia (definido antes de usar em renderRows)
@@ -304,6 +319,11 @@
     const userEditsPieCanvas = document.getElementById('userEditsPie');
     const pieTotalEditsLbl = document.getElementById('pieTotalEditsLbl');
     let userEditsChart = null;
+    let pieRefreshTimer = null;
+    function schedulePieRefresh(){
+      if(pieRefreshTimer) clearTimeout(pieRefreshTimer);
+      pieRefreshTimer = setTimeout(()=>{ loadUserEditsPie(); }, 200);
+    }
 
     localStorage.setItem('theme','dark');
     let page = 1;
@@ -340,13 +360,18 @@
         'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar, inserted_at'
       );
     }
+    function cleanSearch(s){
+      if(!s) return '';
+      return String(s).replace(/[\u0000-\u001f]/g,'').trim();
+    }
     function applyFilters(q){
-      const s = search.value.trim();
+      const s = cleanSearch(search.value);
       const valid = validFilter.value;
 
       // Busca normal
       if (s) {
-        q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`);
+        const safe = s.replace(/,/g,' ');
+        q = q.or(`f1.ilike.%${safe}%,f2.ilike.%${safe}%`);
       }
 
       // Apenas válidas (f3='valid') se selecionado
@@ -430,6 +455,8 @@
           }]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               display: true,
@@ -586,6 +613,7 @@
       const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
       el.dataset.prev = next ? 'true' : 'false';
+      schedulePieRefresh();
       if(sort.field === 'online'){ await loadPage(); }
     });
 
@@ -599,6 +627,7 @@
       const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
       el.dataset.prev = next ? 'true':'false';
+      schedulePieRefresh();
       if(sort.field === 'flag'){ await loadPage(); }
     });
 
@@ -611,6 +640,7 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ olhar: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Rapelado: '+error.message); return; }
+      schedulePieRefresh();
     });
 
     // S1..S7
@@ -622,7 +652,8 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const update = {}; update[key] = val; update['updated_by'] = updated_by;
       const { error } = await supabase.from(TABLE).update(update).eq('id', id);
-      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); return; }
+      schedulePieRefresh();
     });
 
     // TAG16
@@ -633,7 +664,8 @@
       const v = (el.value || '').toUpperCase().slice(0,16); el.value = v;
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
-      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); return; }
+      schedulePieRefresh();
     }, true);
     rows.addEventListener('keydown', (ev)=>{
       const el = ev.target; if(!el.classList.contains('tagInput')) return;
@@ -682,7 +714,7 @@
     try {
       supabase.channel('realtime:webzen_cache_raw')
         .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
-        .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, async ()=>{ await loadCards(); if(['online','flag','olhar'].includes(sort.field)){ await loadPage(); } })
+        .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, async ()=>{ await loadCards(); schedulePieRefresh(); if(['online','flag','olhar'].includes(sort.field)){ await loadPage(); } })
         .subscribe();
     } catch(err){ console.warn('Realtime indisponível:', err); }
   </script>
