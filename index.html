@@ -124,7 +124,7 @@
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-      <div class="flex flex-col md:flex-row gap-4 items-start">
+      <div class="flex flex-col md:flex-row gap-4 items-start w-full justify-center">
 
         <aside class="md:w-80 shrink-0 space-y-4">
           <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
@@ -194,11 +194,27 @@
             </div>
           </div>
 
-          <!-- Cards -->
-          <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+<!-- Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-stretch w-full">
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
               <div class="text-sm text-zinc-400">Total filtrado</div>
               <div id="cardTotal" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
+              <div class="text-sm text-zinc-400">Online (ligado)</div>
+              <div id="cardOnline" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
+              <div class="text-sm text-zinc-400">Válidas</div>
+              <div id="cardValid" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
+              <div class="text-sm text-zinc-400">Soma WCoin</div>
+              <div id="cardWSum" class="text-2xl font-bold">0</div>
+            </div>
+          </div>
+
+<div id="cardTotal" class="text-2xl font-bold">0</div>
             </div>
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
               <div class="text-sm text-zinc-400">Online (ligado)</div>
@@ -505,7 +521,7 @@
       }).join('');
     }
 
-    // ===== MENU "RECENTES" =====
+    // ===== MENU "RECENTES" (CORRIGIDO) =====
     function closeRecentMenu(){ recentMenu?.classList.add('hidden'); }
 
     recentBtn?.addEventListener('click', (e)=>{
@@ -535,6 +551,7 @@
     document.addEventListener('click', (e)=>{
       if(!recentMenu) return;
       if(recentMenu.classList.contains('hidden')) return;
+      // fecha se clicar fora do botão/menu
       if(!recentMenu.contains(e.target) && !recentBtn.contains(e.target)) closeRecentMenu();
     });
 
@@ -544,7 +561,7 @@
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-    // SORT
+    // SORT (mantive)
     thWcoin.addEventListener('click', ()=>{
       if(sort.field !== 'wcoin_int'){ sort = { field:'wcoin_int', asc:false }; } else { sort.asc = !sort.asc; }
       hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
