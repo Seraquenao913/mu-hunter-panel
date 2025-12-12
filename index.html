@@ -18,14 +18,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-  .mh-sidecard{min-height: 420px;}
+    .mh-sidecard{min-height: 420px;}
 
-  /* Side charts outside the center column (do not affect centering) */
-  .mh-center-wrap{position:relative;}
-  .mh-side{width:320px; position:absolute; top:0;}
-  .mh-side-left{left:0; transform:translateX(calc(-100% - 1.5rem));}
-  .mh-side-right{right:0; transform:translateX(calc(100% + 1.5rem));}
-  @media (max-width: 1279px){ .mh-side{display:none;} }
+    /* Side charts outside the center column (do not affect centering) */
+    .mh-center-wrap{position:relative;}
+    .mh-side{width:320px; position:absolute; top:0;}
+    .mh-side-left{left:0; transform:translateX(calc(-100% - 1.5rem));}
+    .mh-side-right{right:0; transform:translateX(calc(100% + 1.5rem));}
+    @media (max-width: 1279px){ .mh-side{display:none;} }
 
     .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -39,7 +39,6 @@
     th.sortable { cursor: pointer; user-select: none; }
     th.sortable .hint { opacity: .6; font-size: 12px; margin-left: 4px; }
 
-    .saving { opacity: .55; pointer-events: none; transition: opacity .15s ease; }
     .tagbox { width: 16ch; text-transform: uppercase; }
 
     .title-gradient {
@@ -133,185 +132,167 @@
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
       <div class="max-w-7xl mx-auto px-2 mh-center-wrap">
+
         <!-- esquerda fora do corpo -->
         <div class="mh-side mh-side-left hidden xl:block">
-<div class="w-[320px] shrink-0 hidden xl:block">
+          <div class="w-[320px] shrink-0">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col mh-sidecard">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
                 <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
               </div>
-              <div class="w-full h-[260px] flex items-center justify-center">
+
+              <div class="w-full flex items-center justify-center">
                 <div class="w-[260px] h-[260px] flex items-center justify-center">
                   <canvas id="userEditsPie" width="260" height="260"></canvas>
-                            <div id="userLegend" class="mt-3 w-full grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-zinc-200"></div>
-<div id="userLegend" class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-zinc-200"></div>
                 </div>
               </div>
-              </div>
+
+              <!-- legenda externa (2x2) -->
+              <div id="userLegend" class="mt-3 w-full grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-zinc-200"></div>
+            </div>
           </div>
         </div>
 
-        <!-- corpo central (alinhado com o header) -->
-<main class="min-w-0">
-            <!-- Filtros (alinhado e homogêneo) -->
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
-              <!-- Busca -->
-              <div class="md:col-span-7 flex flex-col">
-                <label class="text-sm text-zinc-300 h-5">Busca (username ou senha)</label>
-                <input id="search"
-                  class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700"
-                  placeholder="ex: andrefirme" />
-              </div>
-
-              <!-- Válidas -->
-              <div class="md:col-span-3 flex flex-col">
-                <label class="text-sm text-zinc-300 h-5">Apenas Válidas (f3='valid')</label>
-                <select id="validFilter"
-                  class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700">
-                  <option value="">Não</option>
-                  <option value="yes">Sim</option>
-                </select>
-              </div>
-
-              <!-- guarda o range selecionado -->
-              <input type="hidden" id="timeRange" value="all"/>
-
-              <!-- Botões (mesma altura do label para não desalinha) -->
-              <div class="md:col-span-2 flex flex-col">
-                <div class="h-5"></div>
-                <div class="mt-1 grid grid-cols-2 gap-2">
-                  <button id="applyBtn" class="px-3 py-2 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">
-                    Aplicar
-                  </button>
-
-                  <div class="relative">
-                    <button id="recentBtn"
-                      type="button"
-                      class="px-3 py-2 h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-between gap-2 text-sm whitespace-nowrap">
-                      <span id="recentLabel" class="text-left">Recentes</span>
-                      <span class="text-xs">🕒</span>
-                    </button>
-
-                    <div id="recentMenu"
-                      class="hidden absolute right-0 mt-2 w-44 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg z-50 overflow-hidden">
-                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="24h">Últimas 24h</button>
-                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="7d">Últimos 7 dias</button>
-                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="30d">Últimos 30 dias</button>
-                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <!-- corpo central -->
+        <main class="min-w-0">
+          <!-- Filtros -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
+            <div class="md:col-span-7 flex flex-col">
+              <label class="text-sm text-zinc-300 h-5">Busca (username ou senha)</label>
+              <input id="search"
+                class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700"
+                placeholder="ex: andrefirme" />
             </div>
 
-            <!-- Cards (SEM buraco; ocupam toda largura do centro) -->
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-stretch">
-              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-                <div class="text-sm text-zinc-400">Total filtrado</div>
-                <div id="cardTotal" class="text-2xl font-bold">0</div>
-              </div>
-              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-                <div class="text-sm text-zinc-400">Online (ligado)</div>
-                <div id="cardOnline" class="text-2xl font-bold">0</div>
-              </div>
-              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-                <div class="text-sm text-zinc-400">Válidas</div>
-                <div id="cardValid" class="text-2xl font-bold">0</div>
-              </div>
-              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-                <div class="text-sm text-zinc-400">Soma WCoin</div>
-                <div id="cardWSum" class="text-2xl font-bold">0</div>
-              </div>
-            </div>
-
-            <!-- Tabela -->
-            <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
-              <table class="min-w-full text-sm">
-                <thead class="bg-zinc-900 border-b border-zinc-800">
-                  <tr>
-                    <th class="text-left px-3 py-2">Usuário</th>
-                    <th class="text-left px-3 py-2">Senha</th>
-                    <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
-                    <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
-                    <th class="text-left px-3 py-2 sortable" id="thFlag">Itens Pegar <span class="hint" id="hintF">⇅</span></th>
-                    <th class="text-center px-2 py-2 w-14 sortable" id="thOlhar">Rapelado <span class="hint" id="hintOlhar">⇅</span></th>
-                    <th class="text-center px-2 py-2 w-12">S1</th>
-                    <th class="text-center px-2 py-2 w-12">S2</th>
-                    <th class="text-center px-2 py-2 w-12">S3</th>
-                    <th class="text-center px-2 py-2 w-12">S4</th>
-                    <th class="text-center px-2 py-2 w-12">S5</th>
-                    <th class="text-center px-2 py-2 w-12">S6</th>
-                    <th class="text-center px-2 py-2 w-12">S7</th>
-                    <th class="text-center px-3 py-2">Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="rows" class="divide-y divide-zinc-800 bg-zinc-950"></tbody>
-              </table>
-            </div>
-
-            <div class="flex items-center gap-2 mt-4">
-              <button id="prevBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">◀</button>
-              <span id="pageLbl" class="text-sm text-zinc-400">Página 1</span>
-              <button id="nextBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">▶</button>
-              <select id="limitSel" class="ml-4 px-2 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">
-                <option>25</option>
-                <option selected>50</option>
-                <option>100</option>
+            <div class="md:col-span-3 flex flex-col">
+              <label class="text-sm text-zinc-300 h-5">Apenas Válidas (f3='valid')</label>
+              <select id="validFilter"
+                class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700">
+                <option value="">Não</option>
+                <option value="yes">Sim</option>
               </select>
             </div>
-          </main>
+
+            <input type="hidden" id="timeRange" value="all"/>
+
+            <div class="md:col-span-2 flex flex-col">
+              <div class="h-5"></div>
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <button id="applyBtn" class="px-3 py-2 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">
+                  Aplicar
+                </button>
+
+                <div class="relative">
+                  <button id="recentBtn"
+                    type="button"
+                    class="px-3 py-2 h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-between gap-2 text-sm whitespace-nowrap">
+                    <span id="recentLabel" class="text-left">Recentes</span>
+                    <span class="text-xs">🕒</span>
+                  </button>
+
+                  <div id="recentMenu"
+                    class="hidden absolute right-0 mt-2 w-44 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg z-50 overflow-hidden">
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="24h">Últimas 24h</button>
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="7d">Últimos 7 dias</button>
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="30d">Últimos 30 dias</button>
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-stretch">
+            <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+              <div class="text-sm text-zinc-400">Total filtrado</div>
+              <div id="cardTotal" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+              <div class="text-sm text-zinc-400">Online (ligado)</div>
+              <div id="cardOnline" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+              <div class="text-sm text-zinc-400">Válidas</div>
+              <div id="cardValid" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+              <div class="text-sm text-zinc-400">Soma WCoin</div>
+              <div id="cardWSum" class="text-2xl font-bold">0</div>
+            </div>
+          </div>
+
+          <!-- Tabela -->
+          <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
+            <table class="min-w-full text-sm">
+              <thead class="bg-zinc-900 border-b border-zinc-800">
+                <tr>
+                  <th class="text-left px-3 py-2">Usuário</th>
+                  <th class="text-left px-3 py-2">Senha</th>
+                  <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
+                  <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
+                  <th class="text-left px-3 py-2 sortable" id="thFlag">Itens Pegar <span class="hint" id="hintF">⇅</span></th>
+                  <th class="text-center px-2 py-2 w-14 sortable" id="thOlhar">Rapelado <span class="hint" id="hintOlhar">⇅</span></th>
+                  <th class="text-center px-2 py-2 w-12">S1</th>
+                  <th class="text-center px-2 py-2 w-12">S2</th>
+                  <th class="text-center px-2 py-2 w-12">S3</th>
+                  <th class="text-center px-2 py-2 w-12">S4</th>
+                  <th class="text-center px-2 py-2 w-12">S5</th>
+                  <th class="text-center px-2 py-2 w-12">S6</th>
+                  <th class="text-center px-2 py-2 w-12">S7</th>
+                  <th class="text-center px-3 py-2">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="rows" class="divide-y divide-zinc-800 bg-zinc-950"></tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center gap-2 mt-4">
+            <button id="prevBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">◀</button>
+            <span id="pageLbl" class="text-sm text-zinc-400">Página 1</span>
+            <button id="nextBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">▶</button>
+            <select id="limitSel" class="ml-4 px-2 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">
+              <option>25</option>
+              <option selected>50</option>
+              <option>100</option>
+            </select>
+          </div>
+        </main>
 
         <!-- direita fora do corpo -->
         <div class="mh-side mh-side-right hidden xl:block">
-<div class="w-[320px] shrink-0 hidden xl:block">
+          <div class="w-[320px] shrink-0">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col mh-sidecard">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Status das contas</h3>
                 <span class="text-xs text-zinc-500" id="statusTotalLbl">–</span>
               </div>
 
-              <div class="w-full h-[260px] flex items-center justify-center">
+              <div class="w-full flex items-center justify-center">
                 <div class="w-[260px] h-[260px] flex items-center justify-center">
                   <canvas id="statusPie" width="260" height="260"></canvas>
                 </div>
               </div>
 
-              <p class="mt-2 text-xs text-zinc-500 text-center">
-                Total válidas sem nenhuma marcação
-              </p>
-              <div class="mt-1 text-center text-lg font-bold" id="validasLimpasLbl">0</div>
+              <div id="statusLegend" class="mt-3 w-full grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-zinc-200"></div>
 
-              </div>
+              <div class="mt-3 text-center text-xs text-zinc-500">Total válidas sem nenhuma marcação</div>
+              <div class="mt-1 text-center text-lg font-bold" id="validasLimpasLbl">0</div>
+            </div>
           </div>
         </div>
-      </div>
 
+      </div>
     </section>
-  </div>
-
-  <!-- Modal -->
-  <div id="delModal" class="modal-overlay">
-    <div class="modal">
-      <header class="flex items-center justify-between">
-        <h3 class="font-semibold">Excluir registro</h3>
-        <button id="closeModal" class="text-zinc-400 hover:text-zinc-200">✕</button>
-      </header>
-      <div class="content">
-        <p class="text-zinc-300">Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.</p>
-      </div>
-      <div class="actions">
-        <button id="cancelDel" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700">Cancelar</button>
-        <button id="confirmDel" class="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700">Excluir</button>
-      </div>
-    </div>
   </div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8"; // <- mantenha a sua key aqui
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -357,12 +338,12 @@
     const hintF = document.getElementById('hintF');
     const hintOlhar = document.getElementById('hintOlhar');
 
-    // Gráfico ESQ (por usuário)
+    // Gráfico ESQ
     const userEditsPieCanvas = document.getElementById('userEditsPie');
     const pieTotalEditsLbl = document.getElementById('pieTotalEditsLbl');
     let userEditsChart = null;
 
-    // Gráfico DIR (status)
+    // Gráfico DIR
     const statusPieCanvas = document.getElementById('statusPie');
     const statusTotalLbl = document.getElementById('statusTotalLbl');
     const validasLimpasLbl = document.getElementById('validasLimpasLbl');
@@ -422,7 +403,7 @@
       return `${dd}/${mm} ${hh}:${mi}`;
     }
 
-    // debounce para não spammar RPC
+    // debounce
     let refreshTimer = null;
     function scheduleRefreshAll(ms=250){
       clearTimeout(refreshTimer);
@@ -430,9 +411,7 @@
         await loadCards();
         await loadUserEditsPie();
         await loadStatusPie();
-      loadUserEditsPie();
-        await loadUserEditsPie();
-}, ms);
+      }, ms);
     }
 
     // ---------- AUTH ----------
@@ -446,7 +425,6 @@
         await loadPage();
         await loadUserEditsPie();
         await loadStatusPie();
-        await loadUserEditsPie();
       }
     }
 
@@ -474,7 +452,6 @@
       let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
       const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
 
-      // Mantém seu RPC existente (se tiver). Se não tiver, vai ficar "–"
       try{
         const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
         const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
@@ -484,7 +461,7 @@
       }
     }
 
-    // ---------- PIE ESQ: modificações por usuário ----------
+    // ---------- PIE ESQ ----------
     async function loadUserEditsPie(){
       if (!userEditsPieCanvas) return;
 
@@ -513,7 +490,7 @@
           datasets:[{
             data: values,
             backgroundColor: colors,
-            borderColor: '#000000',   // black border between slices
+            borderColor: '#000000',
             borderWidth: 2,
           }]
         },
@@ -522,7 +499,7 @@
           maintainAspectRatio: false,
           radius: '90%',
           plugins:{
-            legend:{ display:false }, // external legend
+            legend:{ display:false },
             tooltip:{
               callbacks:{
                 label:(tt)=>{
@@ -536,7 +513,6 @@
         }
       });
 
-      // External legend 2x2 (filling the card, like roxo)
       const legendEl = document.getElementById('userLegend');
       if (legendEl){
         legendEl.innerHTML = '';
@@ -552,24 +528,7 @@
       }
     }
 
-
-    }
-
-      const labels = data.map(r => r.user_email || (r.user_id ?? 'desconhecido'));
-      const values = data.map(r => Number(r.total_edits || r.total || 0));
-      const total = values.reduce((a,b)=>a+b,0);
-      pieTotalEditsLbl.textContent = `${total} alterações`;
-
-      const ctx = userEditsPieCanvas.getContext('2d');
-      if (userEditsChart) userEditsChart.destroy();
-      userEditsChart = new Chart(ctx, {
-        type:'pie',
-        data:{ labels, datasets:[{ data: values }] },
-        options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ color:'#e4e4e7', font:{ size:11 }}}}}
-      });
-    }
-
-    // ---------- PIE DIR: status das contas ----------
+    // ---------- PIE DIR ----------
     async function loadStatusPie(){
       if (!statusPieCanvas) return;
       const { data, error } = await supabase.rpc('get_status_distribution');
@@ -577,8 +536,6 @@
       if (!data || !data[0]) return;
 
       const d = data[0];
-
-      // Valores REAIS (para texto/tooltip)
       const real = {
         online: Number(d.online || 0),
         itens: Number(d.itens_pegar || 0),
@@ -593,26 +550,13 @@
         `Válidas limpas (${real.validas.toLocaleString('pt-BR')})`,
       ];
 
-      // --------- Valores VISUAIS (para o gráfico ficar "parecido" com o outro)
-      // Objetivo: a fatia "Válidas limpas" ficar ~70% quando ela é muito maior que as outras,
-      // para que as fatias pequenas fiquem aparentes.
-      // (Os números reais continuam nos cards/tooltip.)
       const otherSum = real.online + real.itens + real.rapelado;
-
-      // Se houver válidas e também houver alguma das outras categorias,
-      // ajusta a fatia de válidas para ~70% do total visual.
-      // 70% válidas / 30% resto  =>  validas_visual = resto * (70/30)
       let validasVisual = real.validas;
       if (real.validas > 0 && otherSum > 0) {
         const targetValidas = otherSum * (70/30);
-        // Só "comprime" quando válidas está muito maior, senão deixa real.
         if (real.validas > targetValidas) validasVisual = targetValidas;
       }
-
-      // Para não sumir completamente quando existir mas for muito pequeno,
-      // damos um "mínimo visual" bem pequeno (sem afetar tooltip)
       const minIfNonZero = 0.25;
-
       const valuesVisual = [
         real.online > 0 ? Math.max(minIfNonZero, real.online) : 0,
         real.itens > 0 ? Math.max(minIfNonZero, real.itens) : 0,
@@ -622,20 +566,12 @@
 
       const totalReal = (real.online + real.itens + real.rapelado + real.validas);
       statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
-      validasLimpasLbl.textContent = String(real.validas.toLocaleString('pt-BR'));
+      validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
 
       const ctx = statusPieCanvas.getContext('2d');
       if (statusChart) statusChart.destroy();
 
-      // Paleta escura/roxo-rosa (como você pediu):
-      // - Válidas: roxo escuro (dominante)
-      // - Outras: tons rosa/roxo mais escuros
-      const colors = [
-        '#a78bfa', // Online (lavanda)
-        '#ec4899', // Itens Pegar (rosa)
-        '#fb7185', // Rapelado (rose)
-        '#4c1d95', // Válidas limpas (roxo escuro dominante)
-      ];
+      const colors = ['#a78bfa','#ec4899','#fb7185','#4c1d95'];
 
       statusChart = new Chart(ctx, {
         type:'pie',
@@ -653,11 +589,7 @@
           maintainAspectRatio: false,
           radius: '90%',
           plugins:{
-            legend:{
-              display:true,
-              position:'bottom',
-              labels:{ color:'#e4e4e7', font:{ size:11 } }
-            },
+            legend:{ display:false },
             tooltip:{
               callbacks:{
                 label:(tt)=>{
@@ -671,13 +603,27 @@
           }
         }
       });
+
+      const legendEl = document.getElementById('statusLegend');
+      if (legendEl){
+        legendEl.innerHTML = '';
+        labels.forEach((lab, i)=>{
+          const item = document.createElement('div');
+          item.className = 'flex items-center gap-2 min-w-0';
+          item.innerHTML = `
+            <span class="inline-block w-8 h-2 rounded-sm border border-black/80" style="background:${colors[i]};"></span>
+            <span class="truncate" title="${lab}">${lab}</span>
+          `;
+          legendEl.appendChild(item);
+        });
+      }
     }
 
     // ---------- TABELA ----------
     function renderRows(items){
       const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
-      rows.innerHTML = items.map(r => {
+      rows.innerHTML = (items || []).map(r => {
         const sCells = [1,2,3,4,5,6,7].map(n =>
           `<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/></td>`
         ).join('');
@@ -776,7 +722,7 @@
       if(!recentMenu.contains(e.target) && !recentBtn.contains(e.target)) closeRecentMenu();
     });
 
-    // ---------- AÇÕES / EVENT DELEGATION ----------
+    // ---------- AÇÕES ----------
     rows.addEventListener('click', async (e)=>{
       const copyBtn = e.target.closest('.copyUserBtn, .copyPassBtn');
       if(copyBtn){
@@ -797,7 +743,6 @@
       const isS = e.target.classList.contains('sChk');
       const isTag = e.target.classList.contains('tagInput');
 
-      // TAG: atualiza no blur (para não spammar)
       if(isTag) return;
 
       let patch = null;
@@ -814,7 +759,6 @@
       const { error } = await supabase.from(TABLE).update(patch).eq('id', id);
       if(error) console.warn('update error:', error.message);
 
-      // Atualiza gráficos (entra/sai do pie automaticamente)
       scheduleRefreshAll(150);
     });
 
@@ -864,7 +808,7 @@
       page = 1; loadPage();
     });
 
-    // ---------- REALTIME: quando marcar/desmarcar, atualiza pies ----------
+    // ---------- REALTIME ----------
     try{
       supabase.channel('realtime:webzen_cache_raw_ui')
         .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, () => scheduleRefreshAll(250))
