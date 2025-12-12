@@ -144,7 +144,8 @@
               <div class="w-full h-[260px] flex items-center justify-center">
                 <div class="w-[260px] h-[260px] flex items-center justify-center">
                   <canvas id="userEditsPie" width="260" height="260"></canvas>
-                </div>
+                              <div id="userLegend" class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-zinc-200"></div>
+</div>
               </div>
               </div>
           </div>
@@ -428,6 +429,8 @@
         await loadCards();
         await loadUserEditsPie();
         await loadStatusPie();
+      loadUserEditsPie();
+        await loadUserEditsPie();
       }, ms);
     }
 
@@ -442,6 +445,7 @@
         await loadPage();
         await loadUserEditsPie();
         await loadStatusPie();
+        await loadUserEditsPie();
       }
     }
 
@@ -482,14 +486,68 @@
     // ---------- PIE ESQ: modificações por usuário ----------
     async function loadUserEditsPie(){
       if (!userEditsPieCanvas) return;
+
       const { data, error } = await supabase.rpc('get_update_stats');
       if (error) return console.warn('Erro get_update_stats:', error.message);
 
-      if (!data || data.length === 0) {
-        if (userEditsChart) { userEditsChart.destroy(); userEditsChart = null; }
-        pieTotalEditsLbl.textContent = '0 alterações';
-        return;
+      const rows = Array.isArray(data) ? data : [];
+      const top = rows.slice(0, 4);
+
+      const labels = top.map(r => (r.user_email || (r.user_id ?? 'sem email')));
+      const values = top.map(r => Number(r.total_edits || r.total || 0));
+
+      const total = rows.reduce((a,r)=>a+Number(r.total_edits||r.total||0),0);
+      pieTotalEditsLbl.textContent = `${total.toLocaleString('pt-BR')} alterações`;
+
+      const ctx = userEditsPieCanvas.getContext('2d');
+      if (userEditsChart) userEditsChart.destroy();
+
+      const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
+
+      userEditsChart = new Chart(ctx, {
+        type:'pie',
+        data:{
+          labels,
+          datasets:[{
+            data: values,
+            backgroundColor: colors,
+            borderColor: '#000000',
+            borderWidth: 2,
+          }]
+        },
+        options:{
+          responsive: false,
+          maintainAspectRatio: false,
+          radius: '90%',
+          plugins:{
+            legend:{ display:false },
+            tooltip:{
+              callbacks:{
+                label:(tt)=>{
+                  const v = values[tt.dataIndex] || 0;
+                  return `${labels[tt.dataIndex]}: ${v.toLocaleString('pt-BR')}`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const legendEl = document.getElementById('userLegend');
+      if (legendEl){
+        legendEl.innerHTML = '';
+        labels.forEach((lab, i)=>{
+          const item = document.createElement('div');
+          item.className = 'flex items-center gap-2 min-w-0';
+          item.innerHTML = `
+            <span class="inline-block w-3 h-3 rounded-sm border border-black/60" style="background:${colors[i]};"></span>
+            <span class="truncate" title="${lab}">${lab}</span>
+          `;
+          legendEl.appendChild(item);
+        });
       }
+    }
+
 
       const labels = data.map(r => r.user_email || (r.user_id ?? 'desconhecido'));
       const values = data.map(r => Number(r.total_edits || r.total || 0));
@@ -522,7 +580,12 @@
         validas: Number(d.validas_limpas || 0),
       };
 
-      const labels = ['Online', 'Itens Pegar', 'Rapelado', 'Válidas limpas'];
+      const labels = [
+        `Online (${real.online.toLocaleString('pt-BR')})`,
+        `Itens Pegar (${real.itens.toLocaleString('pt-BR')})`,
+        `Rapelado (${real.rapelado.toLocaleString('pt-BR')})`,
+        `Válidas limpas (${real.validas.toLocaleString('pt-BR')})`,
+      ];
 
       // --------- Valores VISUAIS (para o gráfico ficar "parecido" com o outro)
       // Objetivo: a fatia "Válidas limpas" ficar ~70% quando ela é muito maior que as outras,
@@ -575,7 +638,7 @@
           datasets:[{
             data: valuesVisual,
             backgroundColor: colors,
-            borderColor: '#0b0b0f',
+            borderColor: '#000000',
             borderWidth: 2,
           }]
         },
@@ -587,7 +650,7 @@
             legend:{
               display:true,
               position:'bottom',
-              labels:{ color:'#e4e4e7', font:{ size:11 } }
+              labels:{ color:'#e4e4e7', boxWidth:12, boxHeight:12, padding:10, font:{ size:11 } }
             },
             tooltip:{
               callbacks:{
