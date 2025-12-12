@@ -546,13 +546,13 @@ function buildKinOrClause(tokens){
                       <span class="text-[10px] text-zinc-500">${formatDate(r.inserted_at)}</span>
                       <span class="text-zinc-600">┊</span>
                       <span class="uval">${highlightText(r.f1 ?? '', tokens)}</span>
-                      <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${highlightText(r.f1 ?? '', tokens)}">${ICON_COPY_SVG}</button>
+                      <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${escapeHtml(String(r.f1 ?? ''))}">${ICON_COPY_SVG}</button>
                     </div>
                   </td>
                   <td class="px-2 py-1 whitespace-nowrap">
                     <div class="flex items-center gap-2">
                       <span class="pval">${highlightText(r.f2 ?? '', tokens)}</span>
-                      <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${highlightText(r.f2 ?? '', tokens)}">${ICON_COPY_SVG}</button>
+                      <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${escapeHtml(String(r.f2 ?? ''))}">${ICON_COPY_SVG}</button>
                     </div>
                   </td>
                   <td class="px-2 py-1 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
