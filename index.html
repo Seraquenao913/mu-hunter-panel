@@ -11,11 +11,15 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
 
+  <!-- Supabase JS v2 -->
+  <script type="module" crossorigin src="https://esm.sh/@supabase/supabase-js@2"></script>
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     .mh-sidecard{min-height: 420px;}
+
     /* Side charts outside the center column (do not affect centering) */
     .mh-center-wrap{position:relative;}
     .mh-side{width:320px; position:absolute; top:0;}
@@ -36,6 +40,7 @@
     th.sortable .hint { opacity: .6; font-size: 12px; margin-left: 4px; }
 
     .tagbox { width: 16ch; text-transform: uppercase; }
+
     .title-gradient {
       background: linear-gradient(90deg, #a78bfa, #60a5fa 35%, #34d399 70%, #f472b6);
       -webkit-background-clip: text;
@@ -84,38 +89,47 @@
     }
     .iconbtn:hover { background:#52525b; }
     .icon { width:16px; height:16px; display:block; }
+  
 
-    /* Legends inside cards (2x2, never overflow) */
-    .mh-legend{
-      margin-top: 12px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      column-gap: 12px;
-      row-gap: 8px;
-      font-size: 11px;
-      color: #e4e4e7;
-      width: 100%;
+    /* ===== Ajustes finais (legendas dentro do card + tamanhos iguais) ===== */
+    .mh-sidecard{min-height: 440px; padding-bottom: 1.25rem;}
+
+    .chart-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      width:100%;
     }
-    .mh-legend-item{
+
+    .chart-legend{
+      margin-top: 14px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 10px;
+      font-size: 10px;
+      color: #e4e4e7;
+    }
+
+    .chart-legend-item{
       display:flex;
       align-items:center;
-      gap:8px;
+      gap: 8px;
       min-width: 0;
-    }
-    .mh-legend-swatch{
-      width: 32px;
-      height: 10px;
-      border-radius: 4px;
-      border: 1px solid rgba(0,0,0,.85);
-      flex: 0 0 auto;
-    }
-    .mh-legend-text{
-      min-width: 0;
+      white-space: normal;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
     }
-  </style>
+
+    .chart-legend-color{
+      width: 28px;
+      height: 8px;
+      border-radius: 2px;
+      border: 2px solid #000; /* linha preta igual ao roxo */
+      flex-shrink: 0;
+    }
+</style>
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
@@ -158,6 +172,7 @@
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
       <div class="max-w-7xl mx-auto px-2 mh-center-wrap">
+
         <!-- esquerda fora do corpo -->
         <div class="mh-side mh-side-left hidden xl:block">
           <div class="w-[320px] shrink-0">
@@ -167,11 +182,10 @@
                 <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
               </div>
 
-              <div class="w-full h-[260px] flex items-center justify-center">
+              <div class="chart-wrap">
                 <canvas id="userEditsPie" width="260" height="260"></canvas>
+                <div id="userLegend" class="chart-legend"></div>
               </div>
-
-              <div id="userLegend" class="mh-legend"></div>
             </div>
           </div>
         </div>
@@ -206,7 +220,8 @@
                 </button>
 
                 <div class="relative">
-                  <button id="recentBtn" type="button"
+                  <button id="recentBtn"
+                    type="button"
                     class="px-3 py-2 h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-between gap-2 text-sm whitespace-nowrap">
                     <span id="recentLabel" class="text-left">Recentes</span>
                     <span class="text-xs">🕒</span>
@@ -220,6 +235,7 @@
                     <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -290,22 +306,21 @@
                 <span class="text-xs text-zinc-500" id="statusTotalLbl">–</span>
               </div>
 
-              <div class="w-full h-[260px] flex items-center justify-center">
+              <div class="chart-wrap">
                 <canvas id="statusPie" width="260" height="260"></canvas>
+                <div id="statusLegend" class="chart-legend"></div>
               </div>
 
-              <div id="statusLegend" class="mh-legend"></div>
-
-              <p class="mt-3 text-xs text-zinc-500 text-center">Total válidas sem nenhuma marcação</p>
+              <div class="mt-3 text-center text-xs text-zinc-500">Total válidas sem nenhuma marcação</div>
               <div class="mt-1 text-center text-lg font-bold" id="validasLimpasLbl">0</div>
             </div>
           </div>
         </div>
+
       </div>
     </section>
   </div>
 
-  <!-- Supabase JS v2 (module) -->
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -335,7 +350,7 @@
     const recentMenu = document.getElementById('recentMenu');
     const recentLabel = document.getElementById('recentLabel');
 
-    const rowsEl = document.getElementById('rows');
+    const rows = document.getElementById('rows');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const pageLbl = document.getElementById('pageLbl');
@@ -359,13 +374,11 @@
     // Gráfico ESQ
     const userEditsPieCanvas = document.getElementById('userEditsPie');
     const pieTotalEditsLbl = document.getElementById('pieTotalEditsLbl');
-    const userLegendEl = document.getElementById('userLegend');
     let userEditsChart = null;
 
     // Gráfico DIR
     const statusPieCanvas = document.getElementById('statusPie');
     const statusTotalLbl = document.getElementById('statusTotalLbl');
-    const statusLegendEl = document.getElementById('statusLegend');
     const validasLimpasLbl = document.getElementById('validasLimpasLbl');
     let statusChart = null;
 
@@ -423,27 +436,17 @@
       return `${dd}/${mm} ${hh}:${mi}`;
     }
 
-    function setLegend(el, items){
-      if(!el) return;
-      el.innerHTML = '';
-      items.forEach(({color, text, title})=>{
-        const item = document.createElement('div');
-        item.className = 'mh-legend-item';
-        item.innerHTML = `
-          <span class="mh-legend-swatch" style="background:${color};"></span>
-          <span class="mh-legend-text" title="${(title ?? text).replace(/"/g,'&quot;')}">${text}</span>
-        `;
-        el.appendChild(item);
-      });
-    }
-
     // debounce
     let refreshTimer = null;
     function scheduleRefreshAll(ms=250){
       clearTimeout(refreshTimer);
       refreshTimer = setTimeout(async ()=>{
-        await loadCards();
-        await Promise.all([loadUserEditsPie(), loadStatusPie()]);
+        // Não deixa um erro (ex: RPC do WCoin) travar os gráficos
+        await Promise.allSettled([
+          loadCards(),
+          loadUserEditsPie(),
+          loadStatusPie(),
+        ]);
       }, ms);
     }
 
@@ -456,7 +459,8 @@
       logoutBtn.classList.toggle('hidden', !logged);
       if (logged) {
         await loadPage();
-        scheduleRefreshAll(0);
+        await loadUserEditsPie();
+        await loadStatusPie();
       }
     }
 
@@ -500,61 +504,76 @@
       const { data, error } = await supabase.rpc('get_update_stats');
       if (error) { console.warn('Erro get_update_stats:', error.message); return; }
 
-      const rows = Array.isArray(data) ? data : [];
-      const top = rows.slice(0, 4);
+      const rowsArr = Array.isArray(data) ? data : [];
+      const top = rowsArr.slice(0, 4);
 
       const rawLabels = top.map(r => (r.user_email || (r.user_id ?? 'sem email')));
       const values = top.map(r => Number(r.total_edits || r.total || 0));
-      const labels = rawLabels.map((lab, i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`);
 
-      const total = rows.reduce((a,r)=>a+Number(r.total_edits||r.total||0),0);
+      const total = rowsArr.reduce((a,r)=> a + Number(r.total_edits || r.total || 0), 0);
       pieTotalEditsLbl.textContent = `${total.toLocaleString('pt-BR')} alterações`;
 
       const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
 
-      const dataset = {
-        data: values,
-        backgroundColor: colors,
-        borderColor: '#000000',
-        borderWidth: 2,
-      };
-
+      // Atualiza / cria gráfico (com animação suave)
       const ctx = userEditsPieCanvas.getContext('2d');
-
-      if (!userEditsChart){
-        userEditsChart = new Chart(ctx, {
-          type:'pie',
-          data:{ labels, datasets:[dataset] },
-          options:{
-            responsive: false,
-            maintainAspectRatio: false,
-            radius: '90%',
-            animation: { duration: 650, easing: 'easeOutQuart' },
-            plugins:{
-              legend:{ display:false },
-              tooltip:{
-                callbacks:{
-                  label:(tt)=>{
-                    const v = values[tt.dataIndex] || 0;
-                    const base = rawLabels[tt.dataIndex] || '';
-                    return `${base}: ${v.toLocaleString('pt-BR')}`;
-                  }
+      const cfg = {
+        type: 'pie',
+        data: {
+          labels: rawLabels.map((lab,i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`),
+          datasets: [{
+            data: values,
+            backgroundColor: colors,
+            borderColor: '#000000',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          radius: '90%',
+          animation: { duration: 520, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (tt) => {
+                  const v = values[tt.dataIndex] || 0;
+                  const base = rawLabels[tt.dataIndex] || '';
+                  return `${base}: ${v.toLocaleString('pt-BR')}`;
                 }
               }
             }
           }
-        });
-      } else {
-        userEditsChart.data.labels = labels;
-        userEditsChart.data.datasets[0].data = values;
-        userEditsChart.data.datasets[0].backgroundColor = colors;
+        }
+      };
+
+      if (userEditsChart) {
+        userEditsChart.data.labels = cfg.data.labels;
+        userEditsChart.data.datasets[0].data = cfg.data.datasets[0].data;
+        userEditsChart.data.datasets[0].backgroundColor = cfg.data.datasets[0].backgroundColor;
+        userEditsChart.options.animation = cfg.options.animation;
         userEditsChart.update();
+      } else {
+        userEditsChart = new Chart(ctx, cfg);
       }
 
-      setLegend(userLegendEl, labels.map((t,i)=>({ color: colors[i], text: t, title: t })));
+      // Legenda 2x2 (sempre cabe no card)
+      const legendEl = document.getElementById('userLegend');
+      if (legendEl){
+        legendEl.innerHTML = '';
+        cfg.data.labels.forEach((lab, i)=>{
+          const item = document.createElement('div');
+          item.className = 'chart-legend-item';
+          item.innerHTML = `
+            <span class="chart-legend-color" style="background:${colors[i]};"></span>
+            <span class="truncate" title="${lab}">${lab}</span>
+          `;
+          legendEl.appendChild(item);
+        });
+      }
     }
-
-    // ---------- PIE DIR ----------
+// ---------- PIE DIR ----------
     async function loadStatusPie(){
       if (!statusPieCanvas) return;
 
@@ -563,12 +582,40 @@
       if (!data || !data[0]) return;
 
       const d = data[0];
+
       const real = {
         online: Number(d.online || 0),
         itens: Number(d.itens_pegar || 0),
         rapelado: Number(d.rapelado || 0),
         validas: Number(d.validas_limpas || 0),
       };
+
+      const totalReal = real.online + real.itens + real.rapelado + real.validas;
+      statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
+      validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
+
+      // Visual: deixa "Válidas limpas" ~70% quando muito maior
+      const otherSum = real.online + real.itens + real.rapelado;
+      let validasVisual = real.validas;
+      if (real.validas > 0 && otherSum > 0) {
+        const targetValidas = otherSum * (70/30);
+        if (real.validas > targetValidas) validasVisual = targetValidas;
+      }
+      const minIfNonZero = 0.25;
+
+      const valuesVisual = [
+        real.online > 0 ? Math.max(minIfNonZero, real.online) : 0,
+        real.itens  > 0 ? Math.max(minIfNonZero, real.itens)  : 0,
+        real.rapelado > 0 ? Math.max(minIfNonZero, real.rapelado) : 0,
+        validasVisual > 0 ? Math.max(minIfNonZero, validasVisual) : 0,
+      ];
+
+      const colors = [
+        '#a78bfa', // Online
+        '#ec4899', // Itens Pegar
+        '#fb7185', // Rapelado
+        '#4c1d95', // Válidas limpas
+      ];
 
       const labels = [
         `Online (${real.online.toLocaleString('pt-BR')})`,
@@ -577,75 +624,70 @@
         `Válidas limpas (${real.validas.toLocaleString('pt-BR')})`,
       ];
 
-      // visual compress: validade ~70% quando muito dominante
-      const otherSum = real.online + real.itens + real.rapelado;
-      let validasVisual = real.validas;
-      if (real.validas > 0 && otherSum > 0) {
-        const targetValidas = otherSum * (70/30);
-        if (real.validas > targetValidas) validasVisual = targetValidas;
-      }
-      const minIfNonZero = 0.25;
-      const valuesVisual = [
-        real.online > 0 ? Math.max(minIfNonZero, real.online) : 0,
-        real.itens > 0 ? Math.max(minIfNonZero, real.itens) : 0,
-        real.rapelado > 0 ? Math.max(minIfNonZero, real.rapelado) : 0,
-        validasVisual > 0 ? Math.max(minIfNonZero, validasVisual) : 0,
-      ];
-
-      const totalReal = (real.online + real.itens + real.rapelado + real.validas);
-      statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
-      validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
-
-      const colors = ['#a78bfa','#ec4899','#fb7185','#4c1d95'];
-
-      const dataset = {
-        data: valuesVisual,
-        backgroundColor: colors,
-        borderColor: '#000000',
-        borderWidth: 2,
-      };
-
+      // Atualiza / cria gráfico (com animação suave)
       const ctx = statusPieCanvas.getContext('2d');
-
-      if (!statusChart){
-        statusChart = new Chart(ctx, {
-          type:'pie',
-          data:{ labels, datasets:[dataset] },
-          options:{
-            responsive:false,
-            maintainAspectRatio:false,
-            radius:'90%',
-            animation: { duration: 650, easing: 'easeOutQuart' },
-            plugins:{
-              legend:{ display:false },
-              tooltip:{
-                callbacks:{
-                  label:(tt)=>{
-                    const i = tt.dataIndex;
-                    const realVals = [real.online, real.itens, real.rapelado, real.validas];
-                    const v = realVals[i] || 0;
-                    return `${labels[i]}: ${v.toLocaleString('pt-BR')}`;
-                  }
+      const cfg = {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data: valuesVisual,
+            backgroundColor: colors,
+            borderColor: '#000000',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: false,
+          maintainAspectRatio: false,
+          radius: '90%',
+          animation: { duration: 520, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (tt) => {
+                  const i = tt.dataIndex;
+                  const realVals = [real.online, real.itens, real.rapelado, real.validas];
+                  const v = realVals[i] || 0;
+                  return `${labels[i]}: ${v.toLocaleString('pt-BR')}`;
                 }
               }
             }
           }
-        });
-      } else {
-        statusChart.data.labels = labels;
-        statusChart.data.datasets[0].data = valuesVisual;
-        statusChart.data.datasets[0].backgroundColor = colors;
+        }
+      };
+
+      if (statusChart) {
+        statusChart.data.labels = cfg.data.labels;
+        statusChart.data.datasets[0].data = cfg.data.datasets[0].data;
+        statusChart.data.datasets[0].backgroundColor = cfg.data.datasets[0].backgroundColor;
+        statusChart.options.animation = cfg.options.animation;
         statusChart.update();
+      } else {
+        statusChart = new Chart(ctx, cfg);
       }
 
-      setLegend(statusLegendEl, labels.map((t,i)=>({ color: colors[i], text: t, title: t })));
+      // Legenda 2x2 (sempre cabe no card)
+      const legendEl = document.getElementById('statusLegend');
+      if (legendEl){
+        legendEl.innerHTML = '';
+        labels.forEach((lab, i)=>{
+          const item = document.createElement('div');
+          item.className = 'chart-legend-item';
+          item.innerHTML = `
+            <span class="chart-legend-color" style="background:${colors[i]};"></span>
+            <span class="truncate" title="${lab}">${lab}</span>
+          `;
+          legendEl.appendChild(item);
+        });
+      }
     }
-
-    // ---------- TABELA ----------
+// ---------- TABELA ----------
     function renderRows(items){
       const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
-      rowsEl.innerHTML = items.map(r => {
+      rows.innerHTML = (items || []).map(r => {
         const sCells = [1,2,3,4,5,6,7].map(n =>
           `<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/></td>`
         ).join('');
@@ -697,11 +739,14 @@
 
       await loadCards();
 
-      let q = applySort(applyFilters(baseSelect())).range(from, to);
+      let q = baseSelect();
+      q = applyFilters(q);
+      q = applySort(q);
+      q = q.range(from, to);
 
       const { data, error } = await q;
       if(error){
-        rowsEl.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
+        rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
         return;
       }
       renderRows(data || []);
@@ -742,15 +787,16 @@
     });
 
     // ---------- AÇÕES ----------
-    rowsEl.addEventListener('click', async (e)=>{
+    rows.addEventListener('click', async (e)=>{
       const copyBtn = e.target.closest('.copyUserBtn, .copyPassBtn');
       if(copyBtn){
         const txt = copyBtn.getAttribute('data-copy') || '';
         if(txt) navigator.clipboard?.writeText(txt);
+        return;
       }
     });
 
-    rowsEl.addEventListener('change', async (e)=>{
+    rows.addEventListener('change', async (e)=>{
       const tr = e.target.closest('tr[data-id]');
       if(!tr) return;
       const id = tr.getAttribute('data-id');
@@ -771,15 +817,16 @@
         const n = e.target.getAttribute('data-s');
         patch = { ['s'+n]: e.target.checked };
       }
+
       if(!patch) return;
 
       const { error } = await supabase.from(TABLE).update(patch).eq('id', id);
       if(error) console.warn('update error:', error.message);
 
-      scheduleRefreshAll(120);
+      scheduleRefreshAll(0);
     });
 
-    rowsEl.addEventListener('focusout', async (e)=>{
+    rows.addEventListener('focusout', async (e)=>{
       const input = e.target.closest('.tagInput');
       if(!input) return;
       const tr = input.closest('tr[data-id]');
@@ -790,7 +837,7 @@
       const { error } = await supabase.from(TABLE).update({ tag4: val || null }).eq('id', id);
       if(error) console.warn('tag update error:', error.message);
 
-      scheduleRefreshAll(180);
+      scheduleRefreshAll(0);
     });
 
     // ---------- PAGINAÇÃO ----------
