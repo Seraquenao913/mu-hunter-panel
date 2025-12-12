@@ -431,7 +431,7 @@
       const takeWindows = (seq) => {
         const s = seq;
         const L = s.length;
-        const lens = [8,7,6]; // mais específico
+        const lens = [7,6,5]; // mais específico
         for(const k of lens){
           if(L < k) continue;
           pushUnique(tokens, s.slice(0,k));
@@ -622,10 +622,11 @@ function buildKinOrClause(tokens){
             if(t.length > bestLen) bestLen = t.length;
           }
         }
-        if(hits >= 2) return true;
-        if(bestLen >= 8) return true;
+        if(bestLen >= 7) return true;
+        if(hits >= 3) return true;
+        if(hits >= 2 && bestLen >= 5) return true;
         return false;
-      }).slice(0, 30);
+      }).slice(0, 80);
 
       return { items, tokens };
     }
@@ -1186,10 +1187,10 @@ function buildKinOrClause(tokens){
 
         // remove a linha e qualquer parentesco aberto logo abaixo
         const next = tr.nextElementSibling;
-        if(next && next.classList.contains('kinRow')) next.remove();
+        if(next && next.classList.contains('kinshipRow')) next.remove();
         tr.remove();
 
-        scheduleRefreshAll(0);
+        scheduleRefresh(0);
         return;
       }
     });
