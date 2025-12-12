@@ -283,6 +283,8 @@
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    const ICON_COPY_SVG = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
 
     // ========= CONFIG =========
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
@@ -484,13 +486,13 @@
                       <span class="text-[10px] text-zinc-500">${formatDate(r.inserted_at)}</span>
                       <span class="text-zinc-600">┊</span>
                       <span class="uval">${(r.f1 ?? '')}</span>
-                      <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${iconCopySvg}</button>
+                      <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${ICON_COPY_SVG}</button>
                     </div>
                   </td>
                   <td class="px-2 py-1 whitespace-nowrap">
                     <div class="flex items-center gap-2">
                       <span class="pval">${(r.f2 ?? '')}</span>
-                      <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${iconCopySvg}</button>
+                      <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${ICON_COPY_SVG}</button>
                     </div>
                   </td>
                   <td class="px-2 py-1 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
@@ -928,7 +930,6 @@
     // ========= TABELA =========
     // ---------- ÍCONES (reuso em tabela e parentesco) ----------
     function renderRows(items){
-      const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
       const iconKinSvg = '<svg class=\"icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M21 21l-4.3-4.3\"/></svg>';
 
       rowsEl.innerHTML = (items || []).map(r => {
@@ -953,13 +954,13 @@
                 <button class="iconbtn kinBtn" title="Parentesco" data-kin="1">${iconKinSvg}</button>
 <span class="text-zinc-600">┊</span>
                 <span class="uval">${(r.f1 ?? '')}</span>
-                <button class="iconbtn copyBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${iconCopySvg}</button>
+                <button class="iconbtn copyBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${ICON_COPY_SVG}</button>
               </div>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 <span class="pval">${(r.f2 ?? '')}</span>
-                <button class="iconbtn copyBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${iconCopySvg}</button>
+                <button class="iconbtn copyBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${ICON_COPY_SVG}</button>
               </div>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
