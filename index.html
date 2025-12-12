@@ -144,15 +144,20 @@
         <div class="flex-1">
 
           <!-- Filtros -->
-          <div class="grid md:grid-cols-4 gap-3 mb-4">
-            <div class="col-span-2">
-              <label class="text-sm text-zinc-300">Busca (username ou senha)</label>
-              <input id="search" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700" placeholder="ex: andrefirme" />
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
+            <!-- Busca -->
+            <div class="md:col-span-7 flex flex-col">
+              <label class="text-sm text-zinc-300 h-5">Busca (username ou senha)</label>
+              <input id="search"
+                class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700"
+                placeholder="ex: andrefirme" />
             </div>
 
-            <div>
-              <label class="text-sm text-zinc-300">Apenas Válidas (f3='valid')</label>
-              <select id="validFilter" class="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-700">
+            <!-- Válidas -->
+            <div class="md:col-span-3 flex flex-col">
+              <label class="text-sm text-zinc-300 h-5">Apenas Válidas (f3='valid')</label>
+              <select id="validFilter"
+                class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700">
                 <option value="">Não</option>
                 <option value="yes">Sim</option>
               </select>
@@ -161,26 +166,29 @@
             <!-- guarda o range selecionado -->
             <input type="hidden" id="timeRange" value="all"/>
 
-            <!-- ✅ FIX: mantém alinhado (2 botões lado a lado sem w-full brigando) -->
-            <div class="grid grid-cols-2 gap-2 items-end">
-              <button id="applyBtn" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">
-                Aplicar
-              </button>
-
-              <div class="relative">
-                <button id="recentBtn"
-                  type="button"
-                  class="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-between gap-2 text-sm whitespace-nowrap">
-                  <span id="recentLabel" class="min-w-[72px] text-left">Recentes</span>
-                  <span class="text-xs">🕒</span>
+            <!-- Botões (mesma altura do label para não desalinha) -->
+            <div class="md:col-span-2 flex flex-col">
+              <div class="h-5"></div>
+              <div class="mt-1 grid grid-cols-2 gap-2">
+                <button id="applyBtn" class="px-3 py-2 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">
+                  Aplicar
                 </button>
 
-                <div id="recentMenu"
-                  class="hidden absolute right-0 mt-2 w-44 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg z-50 overflow-hidden">
-                  <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="24h">Últimas 24h</button>
-                  <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="7d">Últimos 7 dias</button>
-                  <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="30d">Últimos 30 dias</button>
-                  <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
+                <div class="relative">
+                  <button id="recentBtn"
+                    type="button"
+                    class="px-3 py-2 h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-between gap-2 text-sm whitespace-nowrap">
+                    <span id="recentLabel" class="text-left">Recentes</span>
+                    <span class="text-xs">🕒</span>
+                  </button>
+
+                  <div id="recentMenu"
+                    class="hidden absolute right-0 mt-2 w-44 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg z-50 overflow-hidden">
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="24h">Últimas 24h</button>
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="7d">Últimos 7 dias</button>
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="30d">Últimos 30 dias</button>
+                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -497,7 +505,7 @@
       }).join('');
     }
 
-    // ===== MENU "RECENTES" (CORRIGIDO) =====
+    // ===== MENU "RECENTES" =====
     function closeRecentMenu(){ recentMenu?.classList.add('hidden'); }
 
     recentBtn?.addEventListener('click', (e)=>{
@@ -536,7 +544,7 @@
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-    // SORT (mantive)
+    // SORT
     thWcoin.addEventListener('click', ()=>{
       if(sort.field !== 'wcoin_int'){ sort = { field:'wcoin_int', asc:false }; } else { sort.asc = !sort.asc; }
       hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
