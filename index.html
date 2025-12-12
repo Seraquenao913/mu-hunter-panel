@@ -1042,11 +1042,46 @@
     });
 
     // ========= AÇÕES (delegação) =========
-    rowsEl.addEventListener('click', (e)=>{
-      const copyBtn = e.target.closest('.copyBtn');
+    rowsEl.addEventListener('click', async (e)=>{
+      // Copiar
+      const copyBtn = e.target.closest('.copyUserBtn, .copyPassBtn');
       if(copyBtn){
         const txt = copyBtn.getAttribute('data-copy') || '';
         if(txt) navigator.clipboard?.writeText(txt);
+        return;
+      }
+
+      // Parentesco (lupa)
+      const kinBtn = e.target.closest('.kinBtn');
+      if(kinBtn){
+        const tr = kinBtn.closest('tr[data-id]');
+        if(tr) await toggleKinshipRow(tr);
+        return;
+      }
+
+      // Excluir
+      const delBtn = e.target.closest('.delBtn');
+      if(delBtn){
+        const tr = delBtn.closest('tr[data-id]');
+        if(!tr) return;
+        const id = tr.getAttribute('data-id');
+        const user = tr.querySelector('.uval')?.textContent?.trim() || '';
+        if(!confirm(`Excluir este registro?\n\n${user ? 'Usuário: ' + user + '\n' : ''}ID: ${id}`)) return;
+
+        const { error } = await supabase.from(TABLE).delete().eq('id', id);
+        if(error){
+          console.warn('delete error:', error.message);
+          alert('Erro ao excluir: ' + (error.message || ''));
+          return;
+        }
+
+        // remove a linha e qualquer parentesco aberto logo abaixo
+        const next = tr.nextElementSibling;
+        if(next && next.classList.contains('kinRow')) next.remove();
+        tr.remove();
+
+        scheduleRefreshAll(0);
+        return;
       }
     });
 
