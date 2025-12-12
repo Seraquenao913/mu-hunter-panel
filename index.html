@@ -126,17 +126,19 @@
       <!-- LAYOUT FINAL: GRÁFICO ESQ (fora) / CORPO CENTRAL / GRÁFICO DIR (fora) -->
       <!-- Importante: os gráficos ficam "fora" do corpo central (max-w) e o centro fica alinhado como na sua 2ª imagem -->
       <div class="w-full">
-        <div class="flex gap-4 items-start justify-center">
+        <div class="flex justify-center gap-6 items-start">
 
           <!-- ===== ESQUERDA: GRÁFICO POR USUÁRIO (já existia) ===== -->
-          <aside class="col-span-12 xl:col-span-3">
+          <aside class="w-[320px] shrink-0 hidden xl:block">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
                 <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
               </div>
-              <div class="flex-1" style="height:180px;">
-                <canvas id="userEditsPie" class="w-full"></canvas>
+              <div class="w-full h-[220px] flex items-center justify-center">
+                <div class="w-[260px] h-[220px]">
+                  <canvas id="userEditsPie"></canvas>
+                </div>
               </div>
               <p class="mt-2 text-xs text-zinc-500">
                 Conta 1 por linha (online/itens/tag/rapelado/s1–s7).
@@ -145,7 +147,8 @@
           </aside>
 
           <!-- ===== CENTRO: FILTROS + CARDS + TABELA ===== -->
-          <main class="col-span-12 xl:col-span-6">
+          <main class="flex-1 min-w-0">
+            <div class="max-w-7xl mx-auto">
             <!-- Filtros (alinhado e homogêneo) -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
               <!-- Busca -->
@@ -253,18 +256,21 @@
               </select>
             </div>
                       </div>
+                      </div>
           </main>
 
           <!-- ===== DIREITA: NOVO GRÁFICO DE STATUS ===== -->
-          <aside class="col-span-12 xl:col-span-3">
+          <aside class="w-[320px] shrink-0 hidden xl:block">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Status das contas</h3>
                 <span class="text-xs text-zinc-500" id="statusTotalLbl">–</span>
               </div>
 
-              <div class="flex-1" style="height:180px;">
-                <canvas id="statusPie" class="w-full"></canvas>
+              <div class="w-full h-[220px] flex items-center justify-center">
+                <div class="w-[260px] h-[220px]">
+                  <canvas id="statusPie"></canvas>
+                </div>
               </div>
 
               <p class="mt-2 text-xs text-zinc-500 text-center">
@@ -557,10 +563,10 @@
       // - Válidas: roxo escuro (dominante)
       // - Outras: tons rosa/roxo mais escuros
       const colors = [
-        '#a855f7', // Online (roxo)
+        '#a78bfa', // Online (lavanda)
         '#ec4899', // Itens Pegar (rosa)
-        '#7c3aed', // Rapelado (roxo mais fechado)
-        '#5b21b6', // Válidas limpas (roxo escuro - dominante)
+        '#fb7185', // Rapelado (rose)
+        '#4c1d95', // Válidas limpas (roxo escuro dominante)
       ];
 
       statusChart = new Chart(ctx, {
@@ -575,6 +581,8 @@
           }]
         },
         options:{
+          responsive: true,
+          maintainAspectRatio: false,
           plugins:{
             legend:{
               display:true,
