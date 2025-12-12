@@ -7,7 +7,7 @@
 
   <script>document.documentElement.classList.add('dark');</script>
 
-  <!-- Tailwind (ok para dev) -->
+  <!-- Tailwind via CDN (ok para GitHub Pages; em produção real use build/CLI) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
 
@@ -18,115 +18,84 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    .mh-sidecard{min-height: 420px;}
-
-    /* Side charts outside the center column (do not affect centering) */
+    /* ===== Layout ===== */
     .mh-center-wrap{position:relative;}
     .mh-side{width:320px; position:absolute; top:0;}
     .mh-side-left{left:0; transform:translateX(calc(-100% - 1.5rem));}
     .mh-side-right{right:0; transform:translateX(calc(100% + 1.5rem));}
     @media (max-width: 1279px){ .mh-side{display:none;} }
 
-    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #3f3f46; transition: .2s; border-radius: 9999px; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-      background-color: white; transition: .2s; border-radius: 9999px; }
-    input:checked + .slider { background-color: #10b981; }
-    input:checked + .slider:before { transform: translateX(20px); }
-
-    th.sortable { cursor: pointer; user-select: none; }
-    th.sortable .hint { opacity: .6; font-size: 12px; margin-left: 4px; }
-
-    .tagbox { width: 16ch; text-transform: uppercase; }
-
-    .title-gradient {
-      background: linear-gradient(90deg, #a78bfa, #60a5fa 35%, #34d399 70%, #f472b6);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+    /* ===== UI ===== */
+    .title-gradient{
+      background: linear-gradient(90deg,#a78bfa,#60a5fa 35%,#34d399 70%,#f472b6);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
     }
-    .glass { backdrop-filter: saturate(180%) blur(6px); background-color: rgba(24,24,27,.5); }
+    .glass{backdrop-filter:saturate(180%) blur(6px); background-color:rgba(24,24,27,.5);}
 
-    .modal-overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,.6); z-index: 50; }
-    .modal { width: 100%; max-width: 420px; border-radius: 16px; background: #0a0a0a; border: 1px solid #27272a;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35); }
-    .modal header { padding: 14px 16px; border-bottom: 1px solid #27272a;}
-    .modal .content { padding: 16px; }
-    .modal .actions { padding: 16px; display: flex; gap: 8px; justify-content: flex-end; }
-    .show { display: flex; }
+    .switch{position:relative;display:inline-block;width:44px;height:24px;}
+    .switch input{opacity:0;width:0;height:0;}
+    .slider{position:absolute;cursor:pointer;inset:0;background-color:#3f3f46;transition:.2s;border-radius:9999px;}
+    .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.2s;border-radius:9999px;}
+    input:checked + .slider{background-color:#10b981;}
+    input:checked + .slider:before{transform:translateX(20px);}
 
-    .cbfx {
-      appearance: none; -webkit-appearance: none;
-      width: 22px; height: 22px;
-      border: 1px solid rgb(255, 70, 70);
-      border-radius: 3px;
-      background: rgba(0,0,0,0);
-      cursor: pointer;
-      transition: background-color .15s ease, transform .12s ease;
+    th.sortable{cursor:pointer;user-select:none;}
+    th.sortable .hint{opacity:.6;font-size:12px;margin-left:4px;}
+
+    .cbfx{
+      appearance:none;-webkit-appearance:none;
+      width:22px;height:22px;
+      border:1px solid rgb(255,70,70);
+      border-radius:3px;
+      background:transparent;
+      cursor:pointer;
+      transition:background-color .15s ease, transform .12s ease;
     }
-    .cbfx:active { transform: scale(0.95); }
-    .cbfx:checked { background-color: rgb(255,70,70); border-color: rgb(255,70,70); }
-    .cbfx:checked::after {
-      content: "";
-      position: relative;
-      display: block;
-      width: 10px;
-      height: 5px;
-      margin: 5px auto 0;
-      border: 2px solid #fff;
-      border-top: 0;
-      border-right: 0;
-      transform: rotate(-45deg);
+    .cbfx:active{transform:scale(.95);}
+    .cbfx:checked{background-color:rgb(255,70,70);border-color:rgb(255,70,70);}
+    .cbfx:checked::after{
+      content:"";
+      position:relative;
+      display:block;
+      width:10px;height:5px;
+      margin:5px auto 0;
+      border:2px solid #fff;border-top:0;border-right:0;
+      transform:rotate(-45deg);
     }
 
-    .iconbtn {
-      display:inline-flex; align-items:center; justify-content:center;
-      width:26px; height:26px; border-radius:8px;
-      background:#3f3f46; color:#e4e4e7; border:1px solid #27272a;
+    .iconbtn{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:26px;height:26px;border-radius:8px;
+      background:#3f3f46;color:#e4e4e7;border:1px solid #27272a;
     }
-    .iconbtn:hover { background:#52525b; }
-    .icon { width:16px; height:16px; display:block; }
+    .iconbtn:hover{background:#52525b;}
+    .icon{width:16px;height:16px;display:block;}
 
-    /* ===== Ajustes finais (legendas dentro do card + tamanhos iguais) ===== */
-    .mh-sidecard{min-height: 440px; padding-bottom: 1.25rem;}
+    .tagbox{width:16ch;text-transform:uppercase;}
 
-    .chart-wrap{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      width:100%;
-    }
-
+    /* ===== Cards dos gráficos (preenchimento uniforme) ===== */
+    .mh-sidecard{min-height:440px;padding-bottom:1.25rem;}
+    .chart-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;}
     .chart-legend{
-      margin-top: 14px;
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 6px 10px;
-      font-size: 10px;
-      color: #e4e4e7;
+      margin-top:14px;
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:6px 10px;
+      font-size:10px;
+      color:#e4e4e7;
     }
-
     .chart-legend-item{
       display:flex;
       align-items:center;
-      gap: 8px;
-      min-width: 0;
-      white-space: normal;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      gap:8px;
+      min-width:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-
     .chart-legend-color{
-      width: 28px;
-      height: 8px;
-      border-radius: 2px;
-      border: 2px solid #000; /* linha preta igual ao roxo */
-      flex-shrink: 0;
+      width:28px;height:8px;border-radius:2px;border:2px solid #000;flex-shrink:0;
     }
   </style>
 </head>
@@ -139,14 +108,10 @@
         <div class="flex items-center justify-between">
           <div class="w-12"></div>
           <div>
-            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">
-              Account Mu Hunter Panel
-            </h1>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight title-gradient">Account Mu Hunter Panel</h1>
             <p class="mt-2 text-sm text-zinc-400">gerencie status, tags e controles em tempo real</p>
           </div>
-          <button id="logoutBtn" class="px-3 py-1.5 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">
-            Sair
-          </button>
+          <button id="logoutBtn" class="px-3 py-1.5 rounded-xl bg-red-500 text-white hidden hover:bg-red-600 transition">Sair</button>
         </div>
       </div>
     </header>
@@ -172,24 +137,23 @@
     <section id="dashboard" class="hidden">
       <div class="max-w-7xl mx-auto px-2 mh-center-wrap">
 
-        <!-- esquerda fora do corpo -->
-        <div class="mh-side mh-side-left hidden xl:block">
+        <!-- ESQUERDA -->
+        <aside class="mh-side mh-side-left hidden xl:block">
           <div class="w-[320px] shrink-0">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col mh-sidecard">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
                 <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
               </div>
-
               <div class="chart-wrap">
                 <canvas id="userEditsPie" width="260" height="260"></canvas>
                 <div id="userLegend" class="chart-legend"></div>
               </div>
             </div>
           </div>
-        </div>
+        </aside>
 
-        <!-- corpo central -->
+        <!-- CENTRO -->
         <main class="min-w-0">
           <!-- Filtros -->
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
@@ -214,9 +178,7 @@
             <div class="md:col-span-2 flex flex-col">
               <div class="h-5"></div>
               <div class="mt-1 grid grid-cols-2 gap-2">
-                <button id="applyBtn" class="px-3 py-2 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">
-                  Aplicar
-                </button>
+                <button id="applyBtn" class="px-3 py-2 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">Aplicar</button>
 
                 <div class="relative">
                   <button id="recentBtn"
@@ -234,7 +196,6 @@
                     <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -296,8 +257,8 @@
           </div>
         </main>
 
-        <!-- direita fora do corpo -->
-        <div class="mh-side mh-side-right hidden xl:block">
+        <!-- DIREITA -->
+        <aside class="mh-side mh-side-right hidden xl:block">
           <div class="w-[320px] shrink-0">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col mh-sidecard">
               <div class="flex items-center justify-between mb-2">
@@ -314,7 +275,7 @@
               <div class="mt-1 text-center text-lg font-bold" id="validasLimpasLbl">0</div>
             </div>
           </div>
-        </div>
+        </aside>
 
       </div>
     </section>
@@ -323,6 +284,7 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+    // ========= CONFIG =========
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
@@ -331,25 +293,25 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage }
     });
 
-    // ---------- ELEMENTOS ----------
+    // ========= ELEMENTOS =========
     const authCard = document.getElementById('authCard');
     const dashboard = document.getElementById('dashboard');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-    const email = document.getElementById('email');
-    const password = document.getElementById('password');
+    const emailEl = document.getElementById('email');
+    const passEl = document.getElementById('password');
     const authMsg = document.getElementById('authMsg');
 
-    const search = document.getElementById('search');
-    const validFilter = document.getElementById('validFilter');
+    const searchEl = document.getElementById('search');
+    const validFilterEl = document.getElementById('validFilter');
     const applyBtn = document.getElementById('applyBtn');
 
-    const timeRange = document.getElementById('timeRange');
+    const timeRangeEl = document.getElementById('timeRange');
     const recentBtn = document.getElementById('recentBtn');
     const recentMenu = document.getElementById('recentMenu');
     const recentLabel = document.getElementById('recentLabel');
 
-    const rows = document.getElementById('rows');
+    const rowsEl = document.getElementById('rows');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const pageLbl = document.getElementById('pageLbl');
@@ -370,27 +332,28 @@
     const hintF = document.getElementById('hintF');
     const hintOlhar = document.getElementById('hintOlhar');
 
-    // Gráfico ESQ
-    const userEditsPieCanvas = document.getElementById('userEditsPie');
+    // ========= CHARTS STATE =========
+    const userPieCanvas = document.getElementById('userEditsPie');
     const pieTotalEditsLbl = document.getElementById('pieTotalEditsLbl');
-    let userEditsChart = null;
+    const userLegend = document.getElementById('userLegend');
+    let userChart = null;
+    let lastUserRows = []; // [{label, value}]
     let currentUserEmail = null;
-    let lastUserEditsRows = null; // [{label, value}]
 
-    // Gráfico DIR
-    const statusPieCanvas = document.getElementById('statusPie');
+    const statusCanvas = document.getElementById('statusPie');
     const statusTotalLbl = document.getElementById('statusTotalLbl');
     const validasLimpasLbl = document.getElementById('validasLimpasLbl');
+    const statusLegend = document.getElementById('statusLegend');
     let statusChart = null;
+    let lastStatusReal = { online: 0, itens: 0, rapelado: 0, validas: 0 };
 
-    // cache do último status (para update otimista)
-    let lastStatusReal = null;
-
-    // ---------- ESTADO ----------
+    // ========= APP STATE =========
     let page = 1;
     let sort = { field: 'inserted_at', asc: false };
 
-    // ---------- HELPERS ----------
+    // ========= HELPERS =========
+    const fmt = (n)=> Number(n||0).toLocaleString('pt-BR');
+
     function rangeCutoffISO(val){
       const now = new Date();
       if(val==='24h') now.setHours(now.getHours()-24);
@@ -405,10 +368,10 @@
     }
 
     function applyFilters(q){
-      const s = search.value.trim();
-      const valid = validFilter.value;
+      const s = (searchEl?.value || '').trim();
+      const valid = validFilterEl?.value || '';
 
-      const cutoff = rangeCutoffISO(timeRange?.value || 'all');
+      const cutoff = rangeCutoffISO(timeRangeEl?.value || 'all');
       if(cutoff) q = q.gte('inserted_at', cutoff);
 
       if (s) q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`);
@@ -440,10 +403,10 @@
       return `${dd}/${mm} ${hh}:${mi}`;
     }
 
-    // ---------- HELPERS (status otimista) ----------
     function boolFromData(v){ return v === '1' || v === 'true' || v === true; }
+
     function getRowStateFromTr(tr){
-      const s = {
+      return {
         f3: tr.getAttribute('data-f3') || '',
         online: boolFromData(tr.getAttribute('data-online')),
         flag: boolFromData(tr.getAttribute('data-flag')),
@@ -457,8 +420,8 @@
         s6: boolFromData(tr.getAttribute('data-s6')),
         s7: boolFromData(tr.getAttribute('data-s7')),
       };
-      return s;
     }
+
     function applyRowStateToTr(tr, st){
       tr.setAttribute('data-f3', st.f3 || '');
       tr.setAttribute('data-online', st.online ? '1':'0');
@@ -467,17 +430,193 @@
       tr.setAttribute('data-tag4', (st.tag4 || ''));
       for(let i=1;i<=7;i++) tr.setAttribute('data-s'+i, st['s'+i] ? '1':'0');
     }
+
     function isValidasLimpas(st){
       const tagEmpty = !st.tag4 || String(st.tag4).trim().length === 0;
       return !st.online && !st.flag && !st.olhar &&
              !st.s1 && !st.s2 && !st.s3 && !st.s4 && !st.s5 && !st.s6 && !st.s7 &&
              tagEmpty;
     }
+
     function clampNonNeg(n){ return n < 0 ? 0 : n; }
 
-    function applyStatusToChart(real){
-      if(!real) return;
+    // ========= REFRESH (sempre animado, sem "duplicar infos") =========
+    let refreshTimer = null;
+    let refreshSeq = 0;
 
+    async function refreshAll(reason=''){
+      const seq = ++refreshSeq;
+      const tasks = [loadCards(), loadUserEditsPie(), loadStatusPie()];
+      const results = await Promise.allSettled(tasks);
+      if(seq !== refreshSeq) return; // descarta refresh atrasado
+      // silencia erros (já damos console.warn dentro)
+      return results;
+    }
+
+    function scheduleRefresh(ms=200){
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(()=> refreshAll('scheduled'), ms);
+    }
+
+    // ========= AUTH =========
+    async function updateSessionUI(){
+      const { data: { session } } = await supabase.auth.getSession();
+      currentUserEmail = session?.user?.email || null;
+
+      const logged = !!session;
+      authCard.classList.toggle('hidden', logged);
+      dashboard.classList.toggle('hidden', !logged);
+      logoutBtn.classList.toggle('hidden', !logged);
+
+      if (logged) {
+        await loadPage();
+        await refreshAll('login');
+      }
+    }
+
+    loginBtn.addEventListener('click', async ()=>{
+      authMsg.classList.add('hidden'); authMsg.textContent='';
+      const e = (emailEl.value || '').trim();
+      const p = passEl.value || '';
+      if(!e || !p){
+        authMsg.textContent='Preencha email e senha.';
+        authMsg.classList.remove('hidden');
+        return;
+      }
+      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
+      if(error){
+        authMsg.textContent = error.message || 'Falha ao entrar.';
+        authMsg.classList.remove('hidden');
+        return;
+      }
+      await updateSessionUI();
+    });
+
+    logoutBtn.addEventListener('click', async ()=>{
+      await supabase.auth.signOut();
+      await updateSessionUI();
+    });
+
+    await updateSessionUI();
+
+    // ========= CARDS =========
+    async function loadCards(){
+      try{
+        const qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
+        const { count: totalCount } = await qCount;
+        cardTotal.textContent = totalCount || 0;
+
+        const qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
+        const { count: onCount } = await qOn;
+        cardOnline.textContent = onCount || 0;
+
+        const qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
+        const { count: valCount } = await qVal;
+        cardValid.textContent = valCount || 0;
+
+        try{
+          const s = (searchEl.value || '').trim();
+          const onlyValid = (validFilterEl.value === 'yes');
+          const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
+          cardWSum.textContent = sumErr ? '–' : fmt(sumData || 0);
+        }catch(_e){
+          cardWSum.textContent = '–';
+        }
+      }catch(err){
+        console.warn('loadCards error:', err);
+      }
+    }
+
+    // ========= PIE AZUL (user edits) =========
+    function renderUserChartFromRows(rowsArr){
+      const top = (rowsArr || []).slice().sort((a,b)=> (b.value||0)-(a.value||0)).slice(0,4);
+
+      const labels = top.map(r => r.label);            // ✅ labels fixos (sem números)
+      const values = top.map(r => Number(r.value||0)); // ✅ valores no dataset
+      const total = (rowsArr || []).reduce((a,r)=> a + Number(r.value||0), 0);
+
+      pieTotalEditsLbl.textContent = `${fmt(total)} alterações`;
+
+      const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
+      const ctx = userPieCanvas.getContext('2d');
+
+      if(userChart){
+        userChart.data.labels = labels;
+        userChart.data.datasets[0].data = values;
+        userChart.update(); // anima
+      } else {
+        userChart = new Chart(ctx, {
+          type:'pie',
+          data:{
+            labels,
+            datasets:[{
+              data: values,
+              backgroundColor: colors,
+              borderColor:'#000',
+              borderWidth:2
+            }]
+          },
+          options:{
+            responsive:false,
+            maintainAspectRatio:false,
+            radius:'90%',
+            animation:{ duration:520, easing:'easeOutQuart' },
+            plugins:{
+              legend:{ display:false },
+              tooltip:{
+                callbacks:{
+                  label:(tt)=> `${labels[tt.dataIndex]}: ${fmt(values[tt.dataIndex])}`
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // legenda custom (com números)
+      if(userLegend){
+        userLegend.innerHTML = '';
+        labels.forEach((lab,i)=>{
+          const item = document.createElement('div');
+          item.className = 'chart-legend-item';
+          item.innerHTML = `
+            <span class="chart-legend-color" style="background:${colors[i]};"></span>
+            <span title="${lab}">${lab} (${fmt(values[i])})</span>
+          `;
+          userLegend.appendChild(item);
+        });
+      }
+    }
+
+    async function loadUserEditsPie(){
+      if(!userPieCanvas) return;
+      try{
+        const { data, error } = await supabase.rpc('get_update_stats');
+        if(error){ console.warn('get_update_stats:', error.message); return; }
+
+        const arr = Array.isArray(data) ? data : [];
+        lastUserRows = arr.map(r => ({
+          label: (r.user_email || (r.user_id ?? 'sem email')),
+          value: Number(r.total_edits || r.total || 0)
+        }));
+        renderUserChartFromRows(lastUserRows);
+      }catch(err){
+        console.warn('loadUserEditsPie error:', err);
+      }
+    }
+
+    function optimisticUserEditsBump(){
+      if(!currentUserEmail) return;
+      const rowsArr = Array.isArray(lastUserRows) ? lastUserRows.slice() : [];
+      const idx = rowsArr.findIndex(r => r.label === currentUserEmail);
+      if(idx >= 0) rowsArr[idx] = { ...rowsArr[idx], value: Number(rowsArr[idx].value||0) + 1 };
+      else rowsArr.push({ label: currentUserEmail, value: 1 });
+      lastUserRows = rowsArr;
+      renderUserChartFromRows(lastUserRows);
+    }
+
+    // ========= PIE ROXO (status) =========
+    function statusVisualValues(real){
       const otherSum = real.online + real.itens + real.rapelado;
       let validasVisual = real.validas;
       if (real.validas > 0 && otherSum > 0) {
@@ -485,53 +624,53 @@
         if (real.validas > targetValidas) validasVisual = targetValidas;
       }
       const minIfNonZero = 0.25;
-      const valuesVisual = [
+      return [
         real.online > 0 ? Math.max(minIfNonZero, real.online) : 0,
-        real.itens  > 0 ? Math.max(minIfNonZero, real.itens)  : 0,
+        real.itens > 0 ? Math.max(minIfNonZero, real.itens) : 0,
         real.rapelado > 0 ? Math.max(minIfNonZero, real.rapelado) : 0,
         validasVisual > 0 ? Math.max(minIfNonZero, validasVisual) : 0,
       ];
+    }
 
+    function renderStatusChart(real){
+      const names = ['Online','Itens Pegar','Rapelado','Válidas limpas']; // ✅ labels fixos
       const colors = ['#a78bfa','#ec4899','#fb7185','#4c1d95'];
-      const labels = [
-        `Online (${real.online.toLocaleString('pt-BR')})`,
-        `Itens Pegar (${real.itens.toLocaleString('pt-BR')})`,
-        `Rapelado (${real.rapelado.toLocaleString('pt-BR')})`,
-        `Válidas limpas (${real.validas.toLocaleString('pt-BR')})`,
-      ];
-      const baseNames = ['Online','Itens Pegar','Rapelado','Válidas limpas'];
 
       const totalReal = real.online + real.itens + real.rapelado + real.validas;
-      statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
-      validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
+      statusTotalLbl.textContent = `${fmt(totalReal)} registros`;
+      validasLimpasLbl.textContent = fmt(real.validas);
 
-      const cfgAnim = { duration: 520, easing: 'easeOutQuart' };
+      const valuesVisual = statusVisualValues(real);
+      const ctx = statusCanvas.getContext('2d');
 
-      const ctx = statusPieCanvas.getContext('2d');
       if(statusChart){
-        statusChart.data.labels = labels;
-        statusChart.data.datasets[0].data = [...valuesVisual];
-        statusChart.data.datasets[0].backgroundColor = colors;
-        statusChart.options.animation = cfgAnim;
-        statusChart.update(); // anima e redesenha
-      }else{
+        statusChart.data.labels = names;
+        statusChart.data.datasets[0].data = valuesVisual;
+        statusChart.update(); // anima
+      } else {
         statusChart = new Chart(ctx, {
-          type: 'pie',
-          data: { labels, datasets: [{ data: valuesVisual, backgroundColor: colors, borderColor:'#000', borderWidth:2 }] },
-          options: {
+          type:'pie',
+          data:{
+            labels: names,
+            datasets:[{
+              data: valuesVisual,
+              backgroundColor: colors,
+              borderColor:'#000',
+              borderWidth:2
+            }]
+          },
+          options:{
             responsive:false,
             maintainAspectRatio:false,
             radius:'90%',
-            animation: cfgAnim,
+            animation:{ duration:520, easing:'easeOutQuart' },
             plugins:{
               legend:{ display:false },
               tooltip:{
                 callbacks:{
                   label:(tt)=>{
-                    const i = tt.dataIndex;
                     const realVals = [real.online, real.itens, real.rapelado, real.validas];
-                    const v = realVals[i] || 0;
-                    return `${baseNames[i]}: ${v.toLocaleString('pt-BR')}`;
+                    return `${names[tt.dataIndex]}: ${fmt(realVals[tt.dataIndex])}`;
                   }
                 }
               }
@@ -540,32 +679,58 @@
         });
       }
 
-      const legendEl = document.getElementById('statusLegend');
-      if(legendEl){
-        legendEl.innerHTML = '';
-        labels.forEach((lab, i)=>{
+      // legenda custom com números (dentro do card)
+      if(statusLegend){
+        const counts = [real.online, real.itens, real.rapelado, real.validas];
+        statusLegend.innerHTML = '';
+        names.forEach((name,i)=>{
+          const lab = `${name} (${fmt(counts[i])})`;
           const item = document.createElement('div');
           item.className = 'chart-legend-item';
           item.innerHTML = `
             <span class="chart-legend-color" style="background:${colors[i]};"></span>
-            <span class="truncate" title="${lab}">${lab}</span>
+            <span title="${lab}">${lab}</span>
           `;
-          legendEl.appendChild(item);
+          statusLegend.appendChild(item);
         });
       }
     }
 
-    function optimisticStatusAdjust(tr, patch){
-      if(!lastStatusReal) return;
-      const before = getRowStateFromTr(tr);
-      if(before.f3 !== 'valid') {
-        applyRowStateToTr(tr, { ...before, ...patch });
-        return;
+    async function loadStatusPie(){
+      if(!statusCanvas) return;
+      try{
+        const { data, error } = await supabase.rpc('get_status_distribution');
+        if(error){ console.warn('get_status_distribution:', error.message); return; }
+        if(!data || !data[0]) return;
+
+        const d = data[0];
+        lastStatusReal = {
+          online: Number(d.online || 0),
+          itens: Number(d.itens_pegar || 0),
+          rapelado: Number(d.rapelado || 0),
+          validas: Number(d.validas_limpas || 0),
+        };
+        renderStatusChart(lastStatusReal);
+      }catch(err){
+        console.warn('loadStatusPie error:', err);
       }
+    }
+
+    function optimisticStatusAdjust(tr, patch){
+      // Só vale se já temos status carregado
+      if(!lastStatusReal) return;
+
+      const before = getRowStateFromTr(tr);
       const after = { ...before, ...patch };
 
+      // status do SQL considera apenas f3='valid'
+      if(before.f3 !== 'valid'){
+        applyRowStateToTr(tr, after);
+        return;
+      }
+
       const beforeL = isValidasLimpas(before);
-      const afterL  = isValidasLimpas(after);
+      const afterL = isValidasLimpas(after);
 
       lastStatusReal.online   = clampNonNeg(lastStatusReal.online   + ((after.online?1:0) - (before.online?1:0)));
       lastStatusReal.itens    = clampNonNeg(lastStatusReal.itens    + ((after.flag?1:0)   - (before.flag?1:0)));
@@ -573,199 +738,40 @@
       lastStatusReal.validas  = clampNonNeg(lastStatusReal.validas  + ((afterL?1:0)       - (beforeL?1:0)));
 
       applyRowStateToTr(tr, after);
-      applyStatusToChart(lastStatusReal);
+      renderStatusChart(lastStatusReal);
     }
 
-    // ---------- REFRESH debounce (RPC sync) ----------
-    let refreshTimer = null;
-    function scheduleRefreshAll(ms=250){
-      clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(async ()=>{
-        await loadCards();
-        await loadUserEditsPie();
-        await loadStatusPie();
-      }, ms);
-    }
-
-    // ---------- AUTH ----------
-    async function updateSession(){
-      const { data: { session } } = await supabase.auth.getSession();
-      currentUserEmail = session?.user?.email || null;
-      const logged = !!session;
-      authCard.classList.toggle('hidden', logged);
-      dashboard.classList.toggle('hidden', !logged);
-      logoutBtn.classList.toggle('hidden', !logged);
-      if (logged) {
-        await loadPage();
-        await loadUserEditsPie();
-        await loadStatusPie();
-      }
-    }
-
-    loginBtn.addEventListener('click', async ()=>{
-      authMsg.classList.add('hidden'); authMsg.textContent='';
-      const e = email.value.trim(); const p = password.value;
-      if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
-      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
-      if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
-      await updateSession();
-    });
-
-    logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
-
-    await updateSession();
-
-    // ---------- CARDS ----------
-    async function loadCards(){
-      let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
-      const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
-
-      let qOn = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('online', true);
-      const { count: onCount } = await qOn; cardOnline.textContent = onCount || 0;
-
-      let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
-      const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
-
-      try{
-        const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
-        const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
-        cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
-      }catch(_e){
-        cardWSum.textContent = '–';
-      }
-    }
-
-    // ---------- PIE ESQ (helpers) ----------
-    function applyUserEditsFromRows(rowsArr){
-      if (!userEditsPieCanvas) return;
-      const top = (rowsArr || []).slice().sort((a,b)=> (b.value||0)-(a.value||0)).slice(0,4);
-      const rawLabels = top.map(r => r.label);
-      const values = top.map(r => Number(r.value||0));
-      const total = (rowsArr || []).reduce((a,r)=> a + Number(r.value||0), 0);
-      pieTotalEditsLbl.textContent = `${total.toLocaleString('pt-BR')} alterações`;
-
-      const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
-      const ctx = userEditsPieCanvas.getContext('2d');
-      const labels = rawLabels.map((lab,i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`);
-      const cfgAnim = { duration: 520, easing: 'easeOutQuart' };
-
-      if (userEditsChart){
-        userEditsChart.data.labels = labels;
-        userEditsChart.data.datasets[0].data = [...values];
-        userEditsChart.data.datasets[0].backgroundColor = colors;
-        userEditsChart.options.animation = cfgAnim;
-        userEditsChart.update(); // anima e redesenha
-      } else {
-        userEditsChart = new Chart(ctx, {
-          type: 'pie',
-          data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor:'#000', borderWidth:2 }] },
-          options: {
-            responsive:false,
-            maintainAspectRatio:false,
-            radius:'90%',
-            animation: cfgAnim,
-            plugins:{
-              legend:{ display:false },
-              tooltip:{
-                callbacks:{
-                  label:(tt)=>{
-                    const v = values[tt.dataIndex] || 0;
-                    const base = rawLabels[tt.dataIndex] || '';
-                    return `${base}: ${v.toLocaleString('pt-BR')}`;
-                  }
-                }
-              }
-            }
-          }
-        });
-      }
-
-      const legendEl = document.getElementById('userLegend');
-      if (legendEl){
-        legendEl.innerHTML = '';
-        labels.forEach((lab, i)=>{
-          const item = document.createElement('div');
-          item.className = 'chart-legend-item';
-          item.innerHTML = `
-            <span class="chart-legend-color" style="background:${colors[i]};"></span>
-            <span class="truncate" title="${lab}">${lab}</span>
-          `;
-          legendEl.appendChild(item);
-        });
-      }
-    }
-
-    function optimisticUserEditsBump(){
-      if (!currentUserEmail) return;
-      if (!Array.isArray(lastUserEditsRows)) return;
-
-      const rowsArr = lastUserEditsRows.slice();
-      const idx = rowsArr.findIndex(r => r.label === currentUserEmail);
-      if (idx >= 0) rowsArr[idx] = { ...rowsArr[idx], value: Number(rowsArr[idx].value||0) + 1 };
-      else rowsArr.push({ label: currentUserEmail, value: 1 });
-
-      lastUserEditsRows = rowsArr;
-      applyUserEditsFromRows(lastUserEditsRows);
-    }
-
-    async function loadUserEditsPie(){
-      if (!userEditsPieCanvas) return;
-
-      const { data, error } = await supabase.rpc('get_update_stats');
-      if (error) { console.warn('Erro get_update_stats:', error.message); return; }
-
-      const rowsArr = Array.isArray(data) ? data : [];
-      lastUserEditsRows = rowsArr.map(r => ({
-        label: (r.user_email || (r.user_id ?? 'sem email')),
-        value: Number(r.total_edits || r.total || 0)
-      }));
-
-      applyUserEditsFromRows(lastUserEditsRows);
-    }
-
-    // ---------- PIE DIR ----------
-    async function loadStatusPie(){
-      if (!statusPieCanvas) return;
-      const { data, error } = await supabase.rpc('get_status_distribution');
-      if (error) { console.warn('Erro get_status_distribution:', error.message); return; }
-      if (!data || !data[0]) return;
-      const d = data[0];
-      lastStatusReal = {
-        online: Number(d.online || 0),
-        itens: Number(d.itens_pegar || 0),
-        rapelado: Number(d.rapelado || 0),
-        validas: Number(d.validas_limpas || 0),
-      };
-      applyStatusToChart(lastStatusReal);
-    }
-
-    // ---------- TABELA ----------
+    // ========= TABELA =========
     function renderRows(items){
       const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
-      rows.innerHTML = (items || []).map(r => {
+      rowsEl.innerHTML = (items || []).map(r => {
         const sCells = [1,2,3,4,5,6,7].map(n =>
           `<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/></td>`
         ).join('');
 
         return `
           <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}"
-              data-f3="${(r.f3 ?? '')}" data-online="${r.online ? '1':'0'}" data-flag="${r.flag ? '1':'0'}"
-              data-olhar="${r.olhar ? '1':'0'}" data-tag4="${(r.tag4 ?? '')}"
+              data-f3="${(r.f3 ?? '')}"
+              data-online="${r.online ? '1':'0'}"
+              data-flag="${r.flag ? '1':'0'}"
+              data-olhar="${r.olhar ? '1':'0'}"
+              data-tag4="${(r.tag4 ?? '')}"
               data-s1="${r.s1 ? '1':'0'}" data-s2="${r.s2 ? '1':'0'}" data-s3="${r.s3 ? '1':'0'}"
-              data-s4="${r.s4 ? '1':'0'}" data-s5="${r.s5 ? '1':'0'}" data-s6="${r.s6 ? '1':'0'}" data-s7="${r.s7 ? '1':'0'}">
+              data-s4="${r.s4 ? '1':'0'}" data-s5="${r.s5 ? '1':'0'}" data-s6="${r.s6 ? '1':'0'}" data-s7="${r.s7 ? '1':'0'}"
+          >
             <td class="px-3 py-2 whitespace-nowrap font-medium">
               <div class="flex items-center gap-2">
                 <span class="text-xs text-zinc-500">${formatDate(r.inserted_at)}</span>
                 <span class="text-zinc-600">┊</span>
                 <span class="uval">${(r.f1 ?? '')}</span>
-                <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${iconCopySvg}</button>
+                <button class="iconbtn copyBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${iconCopySvg}</button>
               </div>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 <span class="pval">${(r.f2 ?? '')}</span>
-                <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${iconCopySvg}</button>
+                <button class="iconbtn copyBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${iconCopySvg}</button>
               </div>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
@@ -781,7 +787,8 @@
                   <input type="checkbox" class="flagToggle" ${r.flag ? 'checked' : ''}>
                   <span class="slider"></span>
                 </label>
-                <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700" maxlength="16" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
+                <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700"
+                       maxlength="16" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
               </div>
             </td>
             <td class="px-3 py-2 text-center"><input type="checkbox" class="olharToggle cbfx" ${r.olhar ? 'checked' : ''}/></td>
@@ -795,7 +802,8 @@
 
     async function loadPage(){
       const limit = parseInt(limitSel.value,10) || 50;
-      const from = (page-1)*limit; const to = from + limit - 1;
+      const from = (page-1)*limit;
+      const to = from + limit - 1;
 
       await loadCards();
 
@@ -806,19 +814,18 @@
 
       const { data, error } = await q;
       if(error){
-        rows.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
+        rowsEl.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
         return;
       }
       renderRows(data || []);
       pageLbl.textContent = `Página ${page}`;
     }
 
-    // ---------- MENU "RECENTES" ----------
+    // ========= MENU "RECENTES" =========
     function closeRecentMenu(){ recentMenu?.classList.add('hidden'); }
 
     recentBtn?.addEventListener('click', (e)=>{
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault(); e.stopPropagation();
       recentMenu?.classList.toggle('hidden');
     });
 
@@ -826,7 +833,7 @@
       const btn = e.target.closest('button[data-range]');
       if(!btn) return;
       const range = btn.getAttribute('data-range') || 'all';
-      if(timeRange) timeRange.value = range;
+      if(timeRangeEl) timeRangeEl.value = range;
 
       const labelMap = { '24h':'24h', '7d':'7d', '30d':'30d', 'all':'Recentes' };
       if(recentLabel) recentLabel.textContent = labelMap[range] || 'Recentes';
@@ -837,7 +844,7 @@
 
       closeRecentMenu();
       await loadPage();
-      scheduleRefreshAll(0);
+      scheduleRefresh(0);
     });
 
     document.addEventListener('click', (e)=>{
@@ -846,17 +853,16 @@
       if(!recentMenu.contains(e.target) && !recentBtn.contains(e.target)) closeRecentMenu();
     });
 
-    // ---------- AÇÕES ----------
-    rows.addEventListener('click', async (e)=>{
-      const copyBtn = e.target.closest('.copyUserBtn, .copyPassBtn');
+    // ========= AÇÕES (delegação) =========
+    rowsEl.addEventListener('click', (e)=>{
+      const copyBtn = e.target.closest('.copyBtn');
       if(copyBtn){
         const txt = copyBtn.getAttribute('data-copy') || '';
         if(txt) navigator.clipboard?.writeText(txt);
-        return;
       }
     });
 
-    rows.addEventListener('change', async (e)=>{
+    rowsEl.addEventListener('change', async (e)=>{
       const tr = e.target.closest('tr[data-id]');
       if(!tr) return;
       const id = tr.getAttribute('data-id');
@@ -866,7 +872,6 @@
       const isOlhar = e.target.classList.contains('olharToggle');
       const isS = e.target.classList.contains('sChk');
       const isTag = e.target.classList.contains('tagInput');
-
       if(isTag) return;
 
       let patch = null;
@@ -879,18 +884,18 @@
       }
       if(!patch) return;
 
-      // ✅ Atualização visual IMEDIATA (gráfico roxo + azul)
-      optimisticStatusAdjust(tr, patch);
+      // ✅ UPDATE IMEDIATO (otimista) COM ANIMAÇÃO
       optimisticUserEditsBump();
+      optimisticStatusAdjust(tr, patch);
 
       const { error } = await supabase.from(TABLE).update(patch).eq('id', id);
       if(error) console.warn('update error:', error.message);
 
-      // Depois sincroniza com as RPCs (caso algum cálculo real seja diferente)
-      scheduleRefreshAll(200);
+      // ✅ Confirma no servidor (corrige caso RLS/trigger altere algo)
+      scheduleRefresh(150);
     });
 
-    rows.addEventListener('focusout', async (e)=>{
+    rowsEl.addEventListener('focusout', async (e)=>{
       const input = e.target.closest('.tagInput');
       if(!input) return;
       const tr = input.closest('tr[data-id]');
@@ -898,53 +903,55 @@
       const id = tr.getAttribute('data-id');
       const val = (input.value || '').trim();
 
-      // ✅ Tag afeta "Válidas limpas" no roxo, então faz otimista também
-      optimisticStatusAdjust(tr, { tag4: val || '' });
+      // ✅ otimista (tag mexe em "válidas limpas" e conta como modificação)
       optimisticUserEditsBump();
+      optimisticStatusAdjust(tr, { tag4: val || '' });
 
       const { error } = await supabase.from(TABLE).update({ tag4: val || null }).eq('id', id);
       if(error) console.warn('tag update error:', error.message);
 
-      scheduleRefreshAll(200);
+      scheduleRefresh(150);
     });
 
-    // ---------- PAGINAÇÃO ----------
-    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); scheduleRefreshAll(0); });
+    // ========= PAGINAÇÃO =========
+    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); scheduleRefresh(0); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-    // ---------- SORT ----------
+    // ========= SORT =========
+    function resetHints(){ hintW.textContent='⇅'; hintO.textContent='⇅'; hintF.textContent='⇅'; hintOlhar.textContent='⇅'; }
+
     thWcoin.addEventListener('click', ()=>{
-      if(sort.field !== 'wcoin_int'){ sort = { field:'wcoin_int', asc:false }; } else { sort.asc = !sort.asc; }
-      hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
-      hintO.textContent='⇅'; hintF.textContent='⇅'; hintOlhar.textContent='⇅';
+      if(sort.field !== 'wcoin_int') sort = { field:'wcoin_int', asc:false };
+      else sort.asc = !sort.asc;
+      resetHints(); hintW.textContent = sort.asc ? '↑' : '↓';
       page = 1; loadPage();
     });
     thOnline.addEventListener('click', ()=>{
-      if(sort.field !== 'online'){ sort = { field:'online', asc:false }; } else { sort.asc = !sort.asc; }
-      hintO.textContent = sort.field==='online' ? (sort.asc?'↑':'↓') : '⇅';
-      hintW.textContent='⇅'; hintF.textContent='⇅'; hintOlhar.textContent='⇅';
+      if(sort.field !== 'online') sort = { field:'online', asc:false };
+      else sort.asc = !sort.asc;
+      resetHints(); hintO.textContent = sort.asc ? '↑' : '↓';
       page = 1; loadPage();
     });
     thFlag.addEventListener('click', ()=>{
-      if(sort.field !== 'flag'){ sort = { field:'flag', asc:false }; } else { sort.asc = !sort.asc; }
-      hintF.textContent = sort.field==='flag' ? (sort.asc?'↑':'↓') : '⇅';
-      hintW.textContent='⇅'; hintO.textContent='⇅'; hintOlhar.textContent='⇅';
+      if(sort.field !== 'flag') sort = { field:'flag', asc:false };
+      else sort.asc = !sort.asc;
+      resetHints(); hintF.textContent = sort.asc ? '↑' : '↓';
       page = 1; loadPage();
     });
     thOlhar.addEventListener('click', ()=>{
-      if(sort.field !== 'olhar'){ sort = { field:'olhar', asc:false }; } else { sort.asc = !sort.asc; }
-      hintOlhar.textContent = sort.field==='olhar' ? (sort.asc?'↑':'↓') : '⇅';
-      hintW.textContent='⇅'; hintO.textContent='⇅'; hintF.textContent='⇅';
+      if(sort.field !== 'olhar') sort = { field:'olhar', asc:false };
+      else sort.asc = !sort.asc;
+      resetHints(); hintOlhar.textContent = sort.asc ? '↑' : '↓';
       page = 1; loadPage();
     });
 
-    // ---------- REALTIME ----------
+    // ========= REALTIME =========
     try{
       supabase.channel('realtime:webzen_cache_raw_ui')
-        .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, () => scheduleRefreshAll(250))
-        .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, () => scheduleRefreshAll(250))
+        .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, () => scheduleRefresh(200))
+        .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, () => scheduleRefresh(200))
         .subscribe();
     }catch(err){
       console.warn('Realtime indisponível:', err);
