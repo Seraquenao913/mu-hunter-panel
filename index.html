@@ -438,14 +438,13 @@
 
     // debounce
     let refreshTimer = null;
-    async function refreshNow(){
-      // roda tudo sem travar se uma RPC falhar
-      const tasks = [loadUserEditsPie(), loadStatusPie(), loadCards()];
-      await Promise.allSettled(tasks);
-    }
-    function scheduleRefreshAll(ms=200){
+    function scheduleRefreshAll(ms=250){
       clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(()=>{ refreshNow(); }, ms);
+      refreshTimer = setTimeout(async ()=>{
+        await loadCards();
+        await loadUserEditsPie();
+        await loadStatusPie();
+      }, ms);
     }
 
     // ---------- AUTH ----------
@@ -821,10 +820,7 @@
       const { error } = await supabase.from(TABLE).update(patch).eq('id', id);
       if(error) console.warn('update error:', error.message);
 
-      
-      // Atualiza IMEDIATO (com animação)
-      scheduleRefreshAll(0);
-
+      scheduleRefreshAll(150);
     });
 
     rows.addEventListener('focusout', async (e)=>{
@@ -838,13 +834,11 @@
       const { error } = await supabase.from(TABLE).update({ tag4: val || null }).eq('id', id);
       if(error) console.warn('tag update error:', error.message);
 
-      
-      scheduleRefreshAll(0);
-
+      scheduleRefreshAll(150);
     });
 
     // ---------- PAGINAÇÃO ----------
-    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); scheduleRefreshAll(0); });
+    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); await scheduleRefreshAll(0); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
