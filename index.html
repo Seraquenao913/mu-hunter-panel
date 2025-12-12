@@ -438,16 +438,14 @@
 
     // debounce
     let refreshTimer = null;
-    function scheduleRefreshAll(ms=250){
+    async function refreshNow(){
+      // roda tudo sem travar se uma RPC falhar
+      const tasks = [loadUserEditsPie(), loadStatusPie(), loadCards()];
+      await Promise.allSettled(tasks);
+    }
+    function scheduleRefreshAll(ms=200){
       clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(async ()=>{
-        // Não deixa um erro (ex: RPC do WCoin) travar os gráficos
-        await Promise.allSettled([
-          loadCards(),
-          loadUserEditsPie(),
-          loadStatusPie(),
-        ]);
-      }, ms);
+      refreshTimer = setTimeout(()=>{ refreshNow(); }, ms);
     }
 
     // ---------- AUTH ----------
@@ -823,7 +821,10 @@
       const { error } = await supabase.from(TABLE).update(patch).eq('id', id);
       if(error) console.warn('update error:', error.message);
 
+      
+      // Atualiza IMEDIATO (com animação)
       scheduleRefreshAll(0);
+
     });
 
     rows.addEventListener('focusout', async (e)=>{
@@ -837,7 +838,9 @@
       const { error } = await supabase.from(TABLE).update({ tag4: val || null }).eq('id', id);
       if(error) console.warn('tag update error:', error.message);
 
+      
       scheduleRefreshAll(0);
+
     });
 
     // ---------- PAGINAÇÃO ----------
