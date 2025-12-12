@@ -18,6 +18,13 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+  /* Side charts outside the center column (do not affect centering) */
+  .mh-center-wrap{position:relative;}
+  .mh-side{width:320px; position:absolute; top:0;}
+  .mh-side-left{left:0; transform:translateX(calc(-100% - 1.5rem));}
+  .mh-side-right{right:0; transform:translateX(calc(100% + 1.5rem));}
+  @media (max-width: 1279px){ .mh-side{display:none;} }
+
     .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
@@ -123,13 +130,10 @@
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-      <!-- LAYOUT FINAL: GRÁFICO ESQ (fora) / CORPO CENTRAL / GRÁFICO DIR (fora) -->
-      <!-- Importante: os gráficos ficam "fora" do corpo central (max-w) e o centro fica alinhado como na sua 2ª imagem -->
-      <div class="w-full">
-        <div class="flex justify-center gap-6 items-start">
-
-          <!-- ===== ESQUERDA: GRÁFICO POR USUÁRIO (já existia) ===== -->
-          <aside class="w-[320px] shrink-0 hidden xl:block">
+      <div class="max-w-7xl mx-auto px-2 mh-center-wrap">
+        <!-- esquerda fora do corpo -->
+        <div class="mh-side mh-side-left hidden xl:block">
+<div class="w-[320px] shrink-0 hidden xl:block">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
@@ -144,11 +148,11 @@
                 Conta 1 por linha (online/itens/tag/rapelado/s1–s7).
               </p>
             </div>
-          </aside>
+          </div>
+        </div>
 
-          <!-- ===== CENTRO: FILTROS + CARDS + TABELA ===== -->
-          <main class="flex-1 min-w-0">
-            <div class="max-w-7xl mx-auto">
+        <!-- corpo central (alinhado com o header) -->
+<main class="min-w-0">
             <!-- Filtros (alinhado e homogêneo) -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
               <!-- Busca -->
@@ -254,11 +258,11 @@
                 <option selected>50</option>
                 <option>100</option>
               </select>
-            </div>
           </main>
 
-          <!-- ===== DIREITA: NOVO GRÁFICO DE STATUS ===== -->
-          <aside class="w-[320px] shrink-0 hidden xl:block">
+        <!-- direita fora do corpo -->
+        <div class="mh-side mh-side-right hidden xl:block">
+<div class="w-[320px] shrink-0 hidden xl:block">
             <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Status das contas</h3>
@@ -280,10 +284,10 @@
                 (Considera válidas que NÃO têm online/itens/rapelado/s1–s7/tag)
               </p>
             </div>
-          </aside>
-
+          </div>
         </div>
       </div>
+
     </section>
   </div>
 
@@ -308,7 +312,7 @@
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8"; // <- mantenha a sua key aqui
+    const SUPABASE_ANON_KEY = "REPLACE_WITH_YOUR_KEY"; // <- mantenha a sua key aqui
     const TABLE = "webzen_cache_raw";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
