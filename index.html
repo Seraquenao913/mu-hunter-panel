@@ -89,7 +89,47 @@
     }
     .iconbtn:hover { background:#52525b; }
     .icon { width:16px; height:16px; display:block; }
-  </style>
+  
+
+    /* ===== Ajustes finais (legendas dentro do card + tamanhos iguais) ===== */
+    .mh-sidecard{min-height: 440px; padding-bottom: 1.25rem;}
+
+    .chart-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+    }
+
+    .chart-legend{
+      margin-top: 14px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 10px;
+      font-size: 10px;
+      color: #e4e4e7;
+    }
+
+    .chart-legend-item{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      min-width: 0;
+      white-space: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chart-legend-color{
+      width: 28px;
+      height: 8px;
+      border-radius: 2px;
+      border: 2px solid #000; /* linha preta igual ao roxo */
+      flex-shrink: 0;
+    }
+</style>
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
@@ -142,14 +182,10 @@
                 <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
               </div>
 
-              <div class="w-full flex items-center justify-center">
-                <div class="w-[260px] h-[260px] flex items-center justify-center">
-                  <canvas id="userEditsPie" width="260" height="260"></canvas>
-                </div>
+              <div class="chart-wrap">
+                <canvas id="userEditsPie" width="260" height="260"></canvas>
+                <div id="userLegend" class="chart-legend"></div>
               </div>
-
-              <!-- legenda externa (2x2) -->
-              <div id="userLegend" class="mt-3 w-full grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-zinc-200"></div>
             </div>
           </div>
         </div>
@@ -270,13 +306,10 @@
                 <span class="text-xs text-zinc-500" id="statusTotalLbl">–</span>
               </div>
 
-              <div class="w-full flex items-center justify-center">
-                <div class="w-[260px] h-[260px] flex items-center justify-center">
-                  <canvas id="statusPie" width="260" height="260"></canvas>
-                </div>
+              <div class="chart-wrap">
+                <canvas id="statusPie" width="260" height="260"></canvas>
+                <div id="statusLegend" class="chart-legend"></div>
               </div>
-
-              <div id="statusLegend" class="mt-3 w-full grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-zinc-200"></div>
 
               <div class="mt-3 text-center text-xs text-zinc-500">Total válidas sem nenhuma marcação</div>
               <div class="mt-1 text-center text-lg font-bold" id="validasLimpasLbl">0</div>
@@ -466,43 +499,42 @@
       if (!userEditsPieCanvas) return;
 
       const { data, error } = await supabase.rpc('get_update_stats');
-      if (error) return console.warn('Erro get_update_stats:', error.message);
+      if (error) { console.warn('Erro get_update_stats:', error.message); return; }
 
-      const rows = Array.isArray(data) ? data : [];
-      const top = rows.slice(0, 4);
+      const rowsArr = Array.isArray(data) ? data : [];
+      const top = rowsArr.slice(0, 4);
 
       const rawLabels = top.map(r => (r.user_email || (r.user_id ?? 'sem email')));
       const values = top.map(r => Number(r.total_edits || r.total || 0));
-      const labels = rawLabels.map((lab, i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`);
 
-      const total = rows.reduce((a,r)=>a+Number(r.total_edits||r.total||0),0);
+      const total = rowsArr.reduce((a,r)=> a + Number(r.total_edits || r.total || 0), 0);
       pieTotalEditsLbl.textContent = `${total.toLocaleString('pt-BR')} alterações`;
-
-      const ctx = userEditsPieCanvas.getContext('2d');
-      if (userEditsChart) userEditsChart.destroy();
 
       const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
 
-      userEditsChart = new Chart(ctx, {
-        type:'pie',
-        data:{
-          labels,
-          datasets:[{
+      // Atualiza / cria gráfico (com animação suave)
+      const ctx = userEditsPieCanvas.getContext('2d');
+      const cfg = {
+        type: 'pie',
+        data: {
+          labels: rawLabels.map((lab,i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`),
+          datasets: [{
             data: values,
             backgroundColor: colors,
             borderColor: '#000000',
-            borderWidth: 2,
+            borderWidth: 2
           }]
         },
-        options:{
+        options: {
           responsive: false,
           maintainAspectRatio: false,
           radius: '90%',
-          plugins:{
-            legend:{ display:false },
-            tooltip:{
-              callbacks:{
-                label:(tt)=>{
+          animation: { duration: 520, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (tt) => {
                   const v = values[tt.dataIndex] || 0;
                   const base = rawLabels[tt.dataIndex] || '';
                   return `${base}: ${v.toLocaleString('pt-BR')}`;
@@ -511,37 +543,76 @@
             }
           }
         }
-      });
+      };
 
+      if (userEditsChart) {
+        userEditsChart.data.labels = cfg.data.labels;
+        userEditsChart.data.datasets[0].data = cfg.data.datasets[0].data;
+        userEditsChart.data.datasets[0].backgroundColor = cfg.data.datasets[0].backgroundColor;
+        userEditsChart.options.animation = cfg.options.animation;
+        userEditsChart.update();
+      } else {
+        userEditsChart = new Chart(ctx, cfg);
+      }
+
+      // Legenda 2x2 (sempre cabe no card)
       const legendEl = document.getElementById('userLegend');
       if (legendEl){
         legendEl.innerHTML = '';
-        labels.forEach((lab, i)=>{
+        cfg.data.labels.forEach((lab, i)=>{
           const item = document.createElement('div');
-          item.className = 'flex items-center gap-2 min-w-0';
+          item.className = 'chart-legend-item';
           item.innerHTML = `
-            <span class="inline-block w-8 h-2 rounded-sm border border-black/80" style="background:${colors[i]};"></span>
+            <span class="chart-legend-color" style="background:${colors[i]};"></span>
             <span class="truncate" title="${lab}">${lab}</span>
           `;
           legendEl.appendChild(item);
         });
       }
     }
-
-    // ---------- PIE DIR ----------
+// ---------- PIE DIR ----------
     async function loadStatusPie(){
       if (!statusPieCanvas) return;
+
       const { data, error } = await supabase.rpc('get_status_distribution');
-      if (error) return console.warn('Erro get_status_distribution:', error.message);
+      if (error) { console.warn('Erro get_status_distribution:', error.message); return; }
       if (!data || !data[0]) return;
 
       const d = data[0];
+
       const real = {
         online: Number(d.online || 0),
         itens: Number(d.itens_pegar || 0),
         rapelado: Number(d.rapelado || 0),
         validas: Number(d.validas_limpas || 0),
       };
+
+      const totalReal = real.online + real.itens + real.rapelado + real.validas;
+      statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
+      validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
+
+      // Visual: deixa "Válidas limpas" ~70% quando muito maior
+      const otherSum = real.online + real.itens + real.rapelado;
+      let validasVisual = real.validas;
+      if (real.validas > 0 && otherSum > 0) {
+        const targetValidas = otherSum * (70/30);
+        if (real.validas > targetValidas) validasVisual = targetValidas;
+      }
+      const minIfNonZero = 0.25;
+
+      const valuesVisual = [
+        real.online > 0 ? Math.max(minIfNonZero, real.online) : 0,
+        real.itens  > 0 ? Math.max(minIfNonZero, real.itens)  : 0,
+        real.rapelado > 0 ? Math.max(minIfNonZero, real.rapelado) : 0,
+        validasVisual > 0 ? Math.max(minIfNonZero, validasVisual) : 0,
+      ];
+
+      const colors = [
+        '#a78bfa', // Online
+        '#ec4899', // Itens Pegar
+        '#fb7185', // Rapelado
+        '#4c1d95', // Válidas limpas
+      ];
 
       const labels = [
         `Online (${real.online.toLocaleString('pt-BR')})`,
@@ -550,49 +621,29 @@
         `Válidas limpas (${real.validas.toLocaleString('pt-BR')})`,
       ];
 
-      const otherSum = real.online + real.itens + real.rapelado;
-      let validasVisual = real.validas;
-      if (real.validas > 0 && otherSum > 0) {
-        const targetValidas = otherSum * (70/30);
-        if (real.validas > targetValidas) validasVisual = targetValidas;
-      }
-      const minIfNonZero = 0.25;
-      const valuesVisual = [
-        real.online > 0 ? Math.max(minIfNonZero, real.online) : 0,
-        real.itens > 0 ? Math.max(minIfNonZero, real.itens) : 0,
-        real.rapelado > 0 ? Math.max(minIfNonZero, real.rapelado) : 0,
-        validasVisual > 0 ? Math.max(minIfNonZero, validasVisual) : 0,
-      ];
-
-      const totalReal = (real.online + real.itens + real.rapelado + real.validas);
-      statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
-      validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
-
+      // Atualiza / cria gráfico (com animação suave)
       const ctx = statusPieCanvas.getContext('2d');
-      if (statusChart) statusChart.destroy();
-
-      const colors = ['#a78bfa','#ec4899','#fb7185','#4c1d95'];
-
-      statusChart = new Chart(ctx, {
-        type:'pie',
-        data:{
+      const cfg = {
+        type: 'pie',
+        data: {
           labels,
-          datasets:[{
+          datasets: [{
             data: valuesVisual,
             backgroundColor: colors,
             borderColor: '#000000',
-            borderWidth: 2,
+            borderWidth: 2
           }]
         },
-        options:{
+        options: {
           responsive: false,
           maintainAspectRatio: false,
           radius: '90%',
-          plugins:{
-            legend:{ display:false },
-            tooltip:{
-              callbacks:{
-                label:(tt)=>{
+          animation: { duration: 520, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (tt) => {
                   const i = tt.dataIndex;
                   const realVals = [real.online, real.itens, real.rapelado, real.validas];
                   const v = realVals[i] || 0;
@@ -602,24 +653,34 @@
             }
           }
         }
-      });
+      };
 
+      if (statusChart) {
+        statusChart.data.labels = cfg.data.labels;
+        statusChart.data.datasets[0].data = cfg.data.datasets[0].data;
+        statusChart.data.datasets[0].backgroundColor = cfg.data.datasets[0].backgroundColor;
+        statusChart.options.animation = cfg.options.animation;
+        statusChart.update();
+      } else {
+        statusChart = new Chart(ctx, cfg);
+      }
+
+      // Legenda 2x2 (sempre cabe no card)
       const legendEl = document.getElementById('statusLegend');
       if (legendEl){
         legendEl.innerHTML = '';
         labels.forEach((lab, i)=>{
           const item = document.createElement('div');
-          item.className = 'flex items-center gap-2 min-w-0';
+          item.className = 'chart-legend-item';
           item.innerHTML = `
-            <span class="inline-block w-8 h-2 rounded-sm border border-black/80" style="background:${colors[i]};"></span>
+            <span class="chart-legend-color" style="background:${colors[i]};"></span>
             <span class="truncate" title="${lab}">${lab}</span>
           `;
           legendEl.appendChild(item);
         });
       }
     }
-
-    // ---------- TABELA ----------
+// ---------- TABELA ----------
     function renderRows(items){
       const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
