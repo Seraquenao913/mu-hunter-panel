@@ -394,7 +394,7 @@
       const cutoff = rangeCutoffISO(timeRange?.value || 'all');
       if(cutoff) q = q.gte('inserted_at', cutoff);
 
-      if (s) q = q.or(\`f1.ilike.%\${s}%,f2.ilike.%\${s}%\`);
+      if (s) q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`);
       if (valid === 'yes') q = q.eq('f3', 'valid');
 
       q = q.not('f1', 'like', '%/%');
@@ -420,7 +420,7 @@
       const mm = String(d.getMonth()+1).padStart(2,'0');
       const hh = String(d.getHours()).padStart(2,'0');
       const mi = String(d.getMinutes()).padStart(2,'0');
-      return \`\${dd}/\${mm} \${hh}:\${mi}\`;
+      return `${dd}/${mm} ${hh}:${mi}`;
     }
 
     function setLegend(el, items){
@@ -429,10 +429,10 @@
       items.forEach(({color, text, title})=>{
         const item = document.createElement('div');
         item.className = 'mh-legend-item';
-        item.innerHTML = \`
-          <span class="mh-legend-swatch" style="background:\${color};"></span>
-          <span class="mh-legend-text" title="\${(title ?? text).replace(/"/g,'&quot;')}">\${text}</span>
-        \`;
+        item.innerHTML = `
+          <span class="mh-legend-swatch" style="background:${color};"></span>
+          <span class="mh-legend-text" title="${(title ?? text).replace(/"/g,'&quot;')}">${text}</span>
+        `;
         el.appendChild(item);
       });
     }
@@ -505,10 +505,10 @@
 
       const rawLabels = top.map(r => (r.user_email || (r.user_id ?? 'sem email')));
       const values = top.map(r => Number(r.total_edits || r.total || 0));
-      const labels = rawLabels.map((lab, i)=> \`\${lab} (\${(values[i]||0).toLocaleString('pt-BR')})\`);
+      const labels = rawLabels.map((lab, i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`);
 
       const total = rows.reduce((a,r)=>a+Number(r.total_edits||r.total||0),0);
-      pieTotalEditsLbl.textContent = \`\${total.toLocaleString('pt-BR')} alterações\`;
+      pieTotalEditsLbl.textContent = `${total.toLocaleString('pt-BR')} alterações`;
 
       const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
 
@@ -537,7 +537,7 @@
                   label:(tt)=>{
                     const v = values[tt.dataIndex] || 0;
                     const base = rawLabels[tt.dataIndex] || '';
-                    return \`\${base}: \${v.toLocaleString('pt-BR')}\`;
+                    return `${base}: ${v.toLocaleString('pt-BR')}`;
                   }
                 }
               }
@@ -571,10 +571,10 @@
       };
 
       const labels = [
-        \`Online (\${real.online.toLocaleString('pt-BR')})\`,
-        \`Itens Pegar (\${real.itens.toLocaleString('pt-BR')})\`,
-        \`Rapelado (\${real.rapelado.toLocaleString('pt-BR')})\`,
-        \`Válidas limpas (\${real.validas.toLocaleString('pt-BR')})\`,
+        `Online (${real.online.toLocaleString('pt-BR')})`,
+        `Itens Pegar (${real.itens.toLocaleString('pt-BR')})`,
+        `Rapelado (${real.rapelado.toLocaleString('pt-BR')})`,
+        `Válidas limpas (${real.validas.toLocaleString('pt-BR')})`,
       ];
 
       // visual compress: validade ~70% quando muito dominante
@@ -593,7 +593,7 @@
       ];
 
       const totalReal = (real.online + real.itens + real.rapelado + real.validas);
-      statusTotalLbl.textContent = \`\${totalReal.toLocaleString('pt-BR')} registros\`;
+      statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
       validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
 
       const colors = ['#a78bfa','#ec4899','#fb7185','#4c1d95'];
@@ -624,7 +624,7 @@
                     const i = tt.dataIndex;
                     const realVals = [real.online, real.itens, real.rapelado, real.validas];
                     const v = realVals[i] || 0;
-                    return \`\${labels[i]}: \${v.toLocaleString('pt-BR')}\`;
+                    return `${labels[i]}: ${v.toLocaleString('pt-BR')}`;
                   }
                 }
               }
@@ -647,47 +647,47 @@
 
       rowsEl.innerHTML = items.map(r => {
         const sCells = [1,2,3,4,5,6,7].map(n =>
-          \`<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="\${n}" \${r['s'+n] ? 'checked' : ''}/></td>\`
+          `<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/></td>`
         ).join('');
 
-        return \`
-          <tr class="hover:bg-zinc-900/60 transition" data-id="\${r.id}">
+        return `
+          <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
             <td class="px-3 py-2 whitespace-nowrap font-medium">
               <div class="flex items-center gap-2">
-                <span class="text-xs text-zinc-500">\${formatDate(r.inserted_at)}</span>
+                <span class="text-xs text-zinc-500">${formatDate(r.inserted_at)}</span>
                 <span class="text-zinc-600">┊</span>
-                <span class="uval">\${(r.f1 ?? '')}</span>
-                <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="\${(r.f1 ?? '')}">\${iconCopySvg}</button>
+                <span class="uval">${(r.f1 ?? '')}</span>
+                <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${iconCopySvg}</button>
               </div>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
               <div class="flex items-center gap-2">
-                <span class="pval">\${(r.f2 ?? '')}</span>
-                <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="\${(r.f2 ?? '')}">\${iconCopySvg}</button>
+                <span class="pval">${(r.f2 ?? '')}</span>
+                <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${iconCopySvg}</button>
               </div>
             </td>
-            <td class="px-3 py-2 whitespace-nowrap">\${(r.wcoin_int ?? 0)}</td>
+            <td class="px-3 py-2 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
             <td class="px-3 py-2 whitespace-nowrap">
               <label class="switch">
-                <input type="checkbox" class="onlineToggle" \${r.online ? 'checked' : ''}>
+                <input type="checkbox" class="onlineToggle" ${r.online ? 'checked' : ''}>
                 <span class="slider"></span>
               </label>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
               <div class="flex items-center gap-2">
                 <label class="switch">
-                  <input type="checkbox" class="flagToggle" \${r.flag ? 'checked' : ''}>
+                  <input type="checkbox" class="flagToggle" ${r.flag ? 'checked' : ''}>
                   <span class="slider"></span>
                 </label>
-                <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700" maxlength="16" value="\${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
+                <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700" maxlength="16" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
               </div>
             </td>
-            <td class="px-3 py-2 text-center"><input type="checkbox" class="olharToggle cbfx" \${r.olhar ? 'checked' : ''}/></td>
-            \${sCells}
+            <td class="px-3 py-2 text-center"><input type="checkbox" class="olharToggle cbfx" ${r.olhar ? 'checked' : ''}/></td>
+            ${sCells}
             <td class="px-3 py-2 whitespace-nowrap text-center">
               <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
             </td>
-          </tr>\`;
+          </tr>`;
       }).join('');
     }
 
@@ -701,11 +701,11 @@
 
       const { data, error } = await q;
       if(error){
-        rowsEl.innerHTML = \`<tr><td class='px-3 py-2 text-red-500'>\${error.message}</td></tr>\`;
+        rowsEl.innerHTML = `<tr><td class='px-3 py-2 text-red-500'>${error.message}</td></tr>`;
         return;
       }
       renderRows(data || []);
-      pageLbl.textContent = \`Página \${page}\`;
+      pageLbl.textContent = `Página ${page}`;
     }
 
     // ---------- MENU "RECENTES" ----------
