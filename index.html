@@ -123,9 +123,10 @@
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-      <!-- LAYOUT FINAL: ESQ / CENTRO / DIR -->
-      <div class="max-w-[1800px] mx-auto px-2">
-        <div class="grid grid-cols-12 gap-4 items-start">
+      <!-- LAYOUT FINAL: GRÁFICO ESQ (fora) / CORPO CENTRAL / GRÁFICO DIR (fora) -->
+      <!-- Importante: os gráficos ficam "fora" do corpo central (max-w) e o centro fica alinhado como na sua 2ª imagem -->
+      <div class="w-full">
+        <div class="flex gap-4 items-start justify-center">
 
           <!-- ===== ESQUERDA: GRÁFICO POR USUÁRIO (já existia) ===== -->
           <aside class="col-span-12 xl:col-span-3">
@@ -251,6 +252,7 @@
                 <option>100</option>
               </select>
             </div>
+                      </div>
           </main>
 
           <!-- ===== DIREITA: NOVO GRÁFICO DE STATUS ===== -->
@@ -277,7 +279,7 @@
           </aside>
 
         </div>
-      </div>
+      </div>>
     </section>
   </div>
 
@@ -302,7 +304,7 @@
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8"; // <- mantenha a sua key aqui
+    const SUPABASE_ANON_KEY = "REPLACE_WITH_YOUR_KEY"; // <- mantenha a sua key aqui
     const TABLE = "webzen_cache_raw";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -507,33 +509,90 @@
 
       const d = data[0];
 
+      // Valores REAIS (para texto/tooltip)
+      const real = {
+        online: Number(d.online || 0),
+        itens: Number(d.itens_pegar || 0),
+        rapelado: Number(d.rapelado || 0),
+        validas: Number(d.validas_limpas || 0),
+      };
+
       const labels = ['Online', 'Itens Pegar', 'Rapelado', 'Válidas limpas'];
-      const values = [
-        Number(d.online || 0),
-        Number(d.itens_pegar || 0),
-        Number(d.rapelado || 0),
-        Number(d.validas_limpas || 0)
+
+      // --------- Valores VISUAIS (para o gráfico ficar "parecido" com o outro)
+      // Objetivo: a fatia "Válidas limpas" ficar ~70% quando ela é muito maior que as outras,
+      // para que as fatias pequenas fiquem aparentes.
+      // (Os números reais continuam nos cards/tooltip.)
+      const otherSum = real.online + real.itens + real.rapelado;
+
+      // Se houver válidas e também houver alguma das outras categorias,
+      // ajusta a fatia de válidas para ~70% do total visual.
+      // 70% válidas / 30% resto  =>  validas_visual = resto * (70/30)
+      let validasVisual = real.validas;
+      if (real.validas > 0 && otherSum > 0) {
+        const targetValidas = otherSum * (70/30);
+        // Só "comprime" quando válidas está muito maior, senão deixa real.
+        if (real.validas > targetValidas) validasVisual = targetValidas;
+      }
+
+      // Para não sumir completamente quando existir mas for muito pequeno,
+      // damos um "mínimo visual" bem pequeno (sem afetar tooltip)
+      const minIfNonZero = 0.25;
+
+      const valuesVisual = [
+        real.online > 0 ? Math.max(minIfNonZero, real.online) : 0,
+        real.itens > 0 ? Math.max(minIfNonZero, real.itens) : 0,
+        real.rapelado > 0 ? Math.max(minIfNonZero, real.rapelado) : 0,
+        validasVisual > 0 ? Math.max(minIfNonZero, validasVisual) : 0,
       ];
 
-      const total = values.reduce((a,b)=>a+b,0);
-      statusTotalLbl.textContent = `${total} registros`;
-      validasLimpasLbl.textContent = String(d.validas_limpas || 0);
+      const totalReal = (real.online + real.itens + real.rapelado + real.validas);
+      statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
+      validasLimpasLbl.textContent = String(real.validas.toLocaleString('pt-BR'));
 
       const ctx = statusPieCanvas.getContext('2d');
       if (statusChart) statusChart.destroy();
 
-      // Cores diferentes do gráfico esquerdo (Chart.js escolhe cores padrão, mas para garantir "diferente",
-      // você pode definir backgroundColor. Se quiser SEM definir cores, apague backgroundColor.)
+      // Paleta escura/roxo-rosa (como você pediu):
+      // - Válidas: roxo escuro (dominante)
+      // - Outras: tons rosa/roxo mais escuros
+      const colors = [
+        '#a855f7', // Online (roxo)
+        '#ec4899', // Itens Pegar (rosa)
+        '#7c3aed', // Rapelado (roxo mais fechado)
+        '#5b21b6', // Válidas limpas (roxo escuro - dominante)
+      ];
+
       statusChart = new Chart(ctx, {
         type:'pie',
         data:{
           labels,
           datasets:[{
-            data: values,
-            backgroundColor: ['#22c55e','#eab308','#ef4444','#60a5fa']
+            data: valuesVisual,
+            backgroundColor: colors,
+            borderColor: '#0b0b0f',
+            borderWidth: 2,
           }]
         },
-        options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ color:'#e4e4e7', font:{ size:11 }}}}}
+        options:{
+          plugins:{
+            legend:{
+              display:true,
+              position:'bottom',
+              labels:{ color:'#e4e4e7', font:{ size:11 } }
+            },
+            tooltip:{
+              callbacks:{
+                label:(tt)=>{
+                  const i = tt.dataIndex;
+                  const realVals = [real.online, real.itens, real.rapelado, real.validas];
+                  const v = realVals[i] || 0;
+                  return `${labels[i]}: ${v.toLocaleString('pt-BR')}`;
+                }
+              }
+            }
+          }
+        }
       });
     }
 
