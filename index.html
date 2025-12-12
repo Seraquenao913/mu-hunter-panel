@@ -86,7 +86,6 @@
 
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
   <div id="app" class="max-w-7xl mx-auto p-4">
-
     <!-- Header -->
     <header class="mb-6">
       <div class="rounded-2xl glass border border-zinc-800 p-6 text-center shadow">
@@ -124,147 +123,158 @@
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-      <div class="flex flex-col md:flex-row gap-4 items-start w-full justify-center">
+      <!-- LAYOUT FINAL: ESQ / CENTRO / DIR -->
+      <div class="max-w-[1800px] mx-auto px-2">
+        <div class="grid grid-cols-12 gap-4 items-start">
 
-        <aside class="md:w-80 shrink-0 space-y-4">
-          <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
-              <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
+          <!-- ===== ESQUERDA: GRÁFICO POR USUÁRIO (já existia) ===== -->
+          <aside class="col-span-12 xl:col-span-3">
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
+                <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
+              </div>
+              <div class="flex-1" style="height:180px;">
+                <canvas id="userEditsPie" class="w-full"></canvas>
+              </div>
+              <p class="mt-2 text-xs text-zinc-500">
+                Conta 1 por linha (online/itens/tag/rapelado/s1–s7).
+              </p>
             </div>
-            <div class="flex-1" style="height:180px;">
-              <canvas id="userEditsPie" class="w-full"></canvas>
-            </div>
-            <p class="mt-2 text-xs text-zinc-500">
-              Conta 1 por linha (online/itens/tag/rapelado/s1–s7).
-            </p>
-          </div>
-        </aside>
+          </aside>
 
-        <div class="flex-1">
+          <!-- ===== CENTRO: FILTROS + CARDS + TABELA ===== -->
+          <main class="col-span-12 xl:col-span-6">
+            <!-- Filtros (alinhado e homogêneo) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
+              <!-- Busca -->
+              <div class="md:col-span-7 flex flex-col">
+                <label class="text-sm text-zinc-300 h-5">Busca (username ou senha)</label>
+                <input id="search"
+                  class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700"
+                  placeholder="ex: andrefirme" />
+              </div>
 
-          <!-- Filtros -->
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-end">
-            <!-- Busca -->
-            <div class="md:col-span-7 flex flex-col">
-              <label class="text-sm text-zinc-300 h-5">Busca (username ou senha)</label>
-              <input id="search"
-                class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700"
-                placeholder="ex: andrefirme" />
-            </div>
+              <!-- Válidas -->
+              <div class="md:col-span-3 flex flex-col">
+                <label class="text-sm text-zinc-300 h-5">Apenas Válidas (f3='valid')</label>
+                <select id="validFilter"
+                  class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700">
+                  <option value="">Não</option>
+                  <option value="yes">Sim</option>
+                </select>
+              </div>
 
-            <!-- Válidas -->
-            <div class="md:col-span-3 flex flex-col">
-              <label class="text-sm text-zinc-300 h-5">Apenas Válidas (f3='valid')</label>
-              <select id="validFilter"
-                class="mt-1 w-full h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 outline-none focus:ring-2 focus:ring-zinc-700">
-                <option value="">Não</option>
-                <option value="yes">Sim</option>
-              </select>
-            </div>
+              <!-- guarda o range selecionado -->
+              <input type="hidden" id="timeRange" value="all"/>
 
-            <!-- guarda o range selecionado -->
-            <input type="hidden" id="timeRange" value="all"/>
-
-            <!-- Botões (mesma altura do label para não desalinha) -->
-            <div class="md:col-span-2 flex flex-col">
-              <div class="h-5"></div>
-              <div class="mt-1 grid grid-cols-2 gap-2">
-                <button id="applyBtn" class="px-3 py-2 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">
-                  Aplicar
-                </button>
-
-                <div class="relative">
-                  <button id="recentBtn"
-                    type="button"
-                    class="px-3 py-2 h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-between gap-2 text-sm whitespace-nowrap">
-                    <span id="recentLabel" class="text-left">Recentes</span>
-                    <span class="text-xs">🕒</span>
+              <!-- Botões (mesma altura do label para não desalinha) -->
+              <div class="md:col-span-2 flex flex-col">
+                <div class="h-5"></div>
+                <div class="mt-1 grid grid-cols-2 gap-2">
+                  <button id="applyBtn" class="px-3 py-2 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">
+                    Aplicar
                   </button>
 
-                  <div id="recentMenu"
-                    class="hidden absolute right-0 mt-2 w-44 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg z-50 overflow-hidden">
-                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="24h">Últimas 24h</button>
-                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="7d">Últimos 7 dias</button>
-                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="30d">Últimos 30 dias</button>
-                    <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
+                  <div class="relative">
+                    <button id="recentBtn"
+                      type="button"
+                      class="px-3 py-2 h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-between gap-2 text-sm whitespace-nowrap">
+                      <span id="recentLabel" class="text-left">Recentes</span>
+                      <span class="text-xs">🕒</span>
+                    </button>
+
+                    <div id="recentMenu"
+                      class="hidden absolute right-0 mt-2 w-44 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg z-50 overflow-hidden">
+                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="24h">Últimas 24h</button>
+                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="7d">Últimos 7 dias</button>
+                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="30d">Últimos 30 dias</button>
+                      <button type="button" class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-<!-- Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-stretch w-full">
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
-              <div class="text-sm text-zinc-400">Total filtrado</div>
-              <div id="cardTotal" class="text-2xl font-bold">0</div>
+            <!-- Cards (SEM buraco; ocupam toda largura do centro) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-4 items-stretch">
+              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+                <div class="text-sm text-zinc-400">Total filtrado</div>
+                <div id="cardTotal" class="text-2xl font-bold">0</div>
+              </div>
+              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+                <div class="text-sm text-zinc-400">Online (ligado)</div>
+                <div id="cardOnline" class="text-2xl font-bold">0</div>
+              </div>
+              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+                <div class="text-sm text-zinc-400">Válidas</div>
+                <div id="cardValid" class="text-2xl font-bold">0</div>
+              </div>
+              <div class="md:col-span-3 p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+                <div class="text-sm text-zinc-400">Soma WCoin</div>
+                <div id="cardWSum" class="text-2xl font-bold">0</div>
+              </div>
             </div>
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
-              <div class="text-sm text-zinc-400">Online (ligado)</div>
-              <div id="cardOnline" class="text-2xl font-bold">0</div>
-            </div>
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
-              <div class="text-sm text-zinc-400">Válidas</div>
-              <div id="cardValid" class="text-2xl font-bold">0</div>
-            </div>
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-3">
-              <div class="text-sm text-zinc-400">Soma WCoin</div>
-              <div id="cardWSum" class="text-2xl font-bold">0</div>
-            </div>
-          </div>
 
-<div id="cardTotal" class="text-2xl font-bold">0</div>
+            <!-- Tabela -->
+            <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
+              <table class="min-w-full text-sm">
+                <thead class="bg-zinc-900 border-b border-zinc-800">
+                  <tr>
+                    <th class="text-left px-3 py-2">Usuário</th>
+                    <th class="text-left px-3 py-2">Senha</th>
+                    <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
+                    <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
+                    <th class="text-left px-3 py-2 sortable" id="thFlag">Itens Pegar <span class="hint" id="hintF">⇅</span></th>
+                    <th class="text-center px-2 py-2 w-14 sortable" id="thOlhar">Rapelado <span class="hint" id="hintOlhar">⇅</span></th>
+                    <th class="text-center px-2 py-2 w-12">S1</th>
+                    <th class="text-center px-2 py-2 w-12">S2</th>
+                    <th class="text-center px-2 py-2 w-12">S3</th>
+                    <th class="text-center px-2 py-2 w-12">S4</th>
+                    <th class="text-center px-2 py-2 w-12">S5</th>
+                    <th class="text-center px-2 py-2 w-12">S6</th>
+                    <th class="text-center px-2 py-2 w-12">S7</th>
+                    <th class="text-center px-3 py-2">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="rows" class="divide-y divide-zinc-800 bg-zinc-950"></tbody>
+              </table>
             </div>
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-              <div class="text-sm text-zinc-400">Online (ligado)</div>
-              <div id="cardOnline" class="text-2xl font-bold">0</div>
-            </div>
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-              <div class="text-sm text-zinc-400">Válidas</div>
-              <div id="cardValid" class="text-2xl font-bold">0</div>
-            </div>
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-              <div class="text-sm text-zinc-400">Soma WCoin</div>
-              <div id="cardWSum" class="text-2xl font-bold">0</div>
-            </div>
-          </div>
 
-          <!-- Tabela -->
-          <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
-            <table class="min-w-full text-sm">
-              <thead class="bg-zinc-900 border-b border-zinc-800">
-                <tr>
-                  <th class="text-left px-3 py-2">Usuário</th>
-                  <th class="text-left px-3 py-2">Senha</th>
-                  <th class="text-left px-3 py-2 sortable" id="thWcoin">WCoin <span class="hint" id="hintW">⇅</span></th>
-                  <th class="text-left px-3 py-2 sortable" id="thOnline">Online <span class="hint" id="hintO">⇅</span></th>
-                  <th class="text-left px-3 py-2 sortable" id="thFlag">Itens Pegar <span class="hint" id="hintF">⇅</span></th>
-                  <th class="text-center px-2 py-2 w-14 sortable" id="thOlhar">Rapelado <span class="hint" id="hintOlhar">⇅</span></th>
-                  <th class="text-center px-2 py-2 w-12">S1</th>
-                  <th class="text-center px-2 py-2 w-12">S2</th>
-                  <th class="text-center px-2 py-2 w-12">S3</th>
-                  <th class="text-center px-2 py-2 w-12">S4</th>
-                  <th class="text-center px-2 py-2 w-12">S5</th>
-                  <th class="text-center px-2 py-2 w-12">S6</th>
-                  <th class="text-center px-2 py-2 w-12">S7</th>
-                  <th class="text-center px-3 py-2">Ações</th>
-                </tr>
-              </thead>
-              <tbody id="rows" class="divide-y divide-zinc-800 bg-zinc-950"></tbody>
-            </table>
-          </div>
+            <div class="flex items-center gap-2 mt-4">
+              <button id="prevBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">◀</button>
+              <span id="pageLbl" class="text-sm text-zinc-400">Página 1</span>
+              <button id="nextBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">▶</button>
+              <select id="limitSel" class="ml-4 px-2 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">
+                <option>25</option>
+                <option selected>50</option>
+                <option>100</option>
+              </select>
+            </div>
+          </main>
 
-          <div class="flex items-center gap-2 mt-4">
-            <button id="prevBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">◀</button>
-            <span id="pageLbl" class="text-sm text-zinc-400">Página 1</span>
-            <button id="nextBtn" class="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">▶</button>
-            <select id="limitSel" class="ml-4 px-2 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition">
-              <option>25</option>
-              <option selected>50</option>
-              <option>100</option>
-            </select>
-          </div>
+          <!-- ===== DIREITA: NOVO GRÁFICO DE STATUS ===== -->
+          <aside class="col-span-12 xl:col-span-3">
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm text-zinc-300 font-semibold">Status das contas</h3>
+                <span class="text-xs text-zinc-500" id="statusTotalLbl">–</span>
+              </div>
+
+              <div class="flex-1" style="height:180px;">
+                <canvas id="statusPie" class="w-full"></canvas>
+              </div>
+
+              <p class="mt-2 text-xs text-zinc-500 text-center">
+                Total válidas sem nenhuma marcação
+              </p>
+              <div class="mt-1 text-center text-lg font-bold" id="validasLimpasLbl">0</div>
+
+              <p class="mt-2 text-xs text-zinc-500">
+                (Considera válidas que NÃO têm online/itens/rapelado/s1–s7/tag)
+              </p>
+            </div>
+          </aside>
 
         </div>
       </div>
@@ -292,16 +302,14 @@
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
+    const SUPABASE_ANON_KEY = "REPLACE_WITH_YOUR_KEY"; // <- mantenha a sua key aqui
     const TABLE = "webzen_cache_raw";
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage }
     });
-    window.supabase = supabase;
 
-    const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-
+    // ---------- ELEMENTOS ----------
     const authCard = document.getElementById('authCard');
     const dashboard = document.getElementById('dashboard');
     const loginBtn = document.getElementById('loginBtn');
@@ -340,13 +348,22 @@
     const hintF = document.getElementById('hintF');
     const hintOlhar = document.getElementById('hintOlhar');
 
+    // Gráfico ESQ (por usuário)
     const userEditsPieCanvas = document.getElementById('userEditsPie');
     const pieTotalEditsLbl = document.getElementById('pieTotalEditsLbl');
     let userEditsChart = null;
 
+    // Gráfico DIR (status)
+    const statusPieCanvas = document.getElementById('statusPie');
+    const statusTotalLbl = document.getElementById('statusTotalLbl');
+    const validasLimpasLbl = document.getElementById('validasLimpasLbl');
+    let statusChart = null;
+
+    // ---------- ESTADO ----------
     let page = 1;
     let sort = { field: 'inserted_at', asc: false };
 
+    // ---------- HELPERS ----------
     function rangeCutoffISO(val){
       const now = new Date();
       if(val==='24h') now.setHours(now.getHours()-24);
@@ -355,27 +372,6 @@
       else return null;
       return now.toISOString();
     }
-
-    async function updateSession(){
-      const { data: { session } } = await supabase.auth.getSession();
-      const logged = !!session;
-      authCard.classList.toggle('hidden', logged);
-      dashboard.classList.toggle('hidden', !logged);
-      logoutBtn.classList.toggle('hidden', !logged);
-      if (logged) { await loadPage(); await loadUserEditsPie(); }
-    }
-
-    loginBtn.addEventListener('click', async ()=>{
-      authMsg.classList.add('hidden'); authMsg.textContent='';
-      const e = email.value.trim(); const p = password.value;
-      if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
-      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
-      if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
-      await updateSession();
-    });
-
-    logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
-    await updateSession();
 
     function baseSelect(){
       return supabase.from(TABLE).select('id, f1, f2, f3, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar, inserted_at');
@@ -406,6 +402,56 @@
       return q;
     }
 
+    function formatDate(ts){
+      if(!ts) return '';
+      const d = new Date(ts);
+      if(isNaN(d.getTime())) return '';
+      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mi = String(d.getMinutes()).padStart(2,'0');
+      return `${dd}/${mm} ${hh}:${mi}`;
+    }
+
+    // debounce para não spammar RPC
+    let refreshTimer = null;
+    function scheduleRefreshAll(ms=250){
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(async ()=>{
+        await loadCards();
+        await loadUserEditsPie();
+        await loadStatusPie();
+      }, ms);
+    }
+
+    // ---------- AUTH ----------
+    async function updateSession(){
+      const { data: { session } } = await supabase.auth.getSession();
+      const logged = !!session;
+      authCard.classList.toggle('hidden', logged);
+      dashboard.classList.toggle('hidden', !logged);
+      logoutBtn.classList.toggle('hidden', !logged);
+      if (logged) {
+        await loadPage();
+        await loadUserEditsPie();
+        await loadStatusPie();
+      }
+    }
+
+    loginBtn.addEventListener('click', async ()=>{
+      authMsg.classList.add('hidden'); authMsg.textContent='';
+      const e = email.value.trim(); const p = password.value;
+      if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
+      const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
+      if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
+      await updateSession();
+    });
+
+    logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
+
+    await updateSession();
+
+    // ---------- CARDS ----------
     async function loadCards(){
       let qCount = applyFilters(supabase.from(TABLE).select('*', { count:'exact', head:true }));
       const { count: totalCount } = await qCount; cardTotal.textContent = totalCount || 0;
@@ -416,15 +462,21 @@
       let qVal = applyFilters(supabase.from(TABLE).select('*',{ count:'exact', head:true })).eq('f3','valid');
       const { count: valCount } = await qVal; cardValid.textContent = valCount || 0;
 
-      const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
-      const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
-      cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
+      // Mantém seu RPC existente (se tiver). Se não tiver, vai ficar "–"
+      try{
+        const s = search.value.trim(); const onlyValid = (validFilter.value === 'yes');
+        const { data: sumData, error: sumErr } = await supabase.rpc('sum_wcoin_filtered', { _search: s || null, _only_valid: onlyValid });
+        cardWSum.textContent = sumErr ? '–' : (sumData || 0).toLocaleString('pt-BR');
+      }catch(_e){
+        cardWSum.textContent = '–';
+      }
     }
 
+    // ---------- PIE ESQ: modificações por usuário ----------
     async function loadUserEditsPie(){
       if (!userEditsPieCanvas) return;
       const { data, error } = await supabase.rpc('get_update_stats');
-      if (error) return console.warn('Erro ao carregar stats:', error.message);
+      if (error) return console.warn('Erro get_update_stats:', error.message);
 
       if (!data || data.length === 0) {
         if (userEditsChart) { userEditsChart.destroy(); userEditsChart = null; }
@@ -439,8 +491,100 @@
 
       const ctx = userEditsPieCanvas.getContext('2d');
       if (userEditsChart) userEditsChart.destroy();
-      userEditsChart = new Chart(ctx, { type:'pie', data:{ labels, datasets:[{ data: values }] },
-        options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ color:'#e4e4e7', font:{ size:11 }}}}}});
+      userEditsChart = new Chart(ctx, {
+        type:'pie',
+        data:{ labels, datasets:[{ data: values }] },
+        options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ color:'#e4e4e7', font:{ size:11 }}}}}
+      });
+    }
+
+    // ---------- PIE DIR: status das contas ----------
+    async function loadStatusPie(){
+      if (!statusPieCanvas) return;
+      const { data, error } = await supabase.rpc('get_status_distribution');
+      if (error) return console.warn('Erro get_status_distribution:', error.message);
+      if (!data || !data[0]) return;
+
+      const d = data[0];
+
+      const labels = ['Online', 'Itens Pegar', 'Rapelado', 'Válidas limpas'];
+      const values = [
+        Number(d.online || 0),
+        Number(d.itens_pegar || 0),
+        Number(d.rapelado || 0),
+        Number(d.validas_limpas || 0)
+      ];
+
+      const total = values.reduce((a,b)=>a+b,0);
+      statusTotalLbl.textContent = `${total} registros`;
+      validasLimpasLbl.textContent = String(d.validas_limpas || 0);
+
+      const ctx = statusPieCanvas.getContext('2d');
+      if (statusChart) statusChart.destroy();
+
+      // Cores diferentes do gráfico esquerdo (Chart.js escolhe cores padrão, mas para garantir "diferente",
+      // você pode definir backgroundColor. Se quiser SEM definir cores, apague backgroundColor.)
+      statusChart = new Chart(ctx, {
+        type:'pie',
+        data:{
+          labels,
+          datasets:[{
+            data: values,
+            backgroundColor: ['#22c55e','#eab308','#ef4444','#60a5fa']
+          }]
+        },
+        options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ color:'#e4e4e7', font:{ size:11 }}}}}
+      });
+    }
+
+    // ---------- TABELA ----------
+    function renderRows(items){
+      const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+      rows.innerHTML = items.map(r => {
+        const sCells = [1,2,3,4,5,6,7].map(n =>
+          `<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/></td>`
+        ).join('');
+
+        return `
+          <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
+            <td class="px-3 py-2 whitespace-nowrap font-medium">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-zinc-500">${formatDate(r.inserted_at)}</span>
+                <span class="text-zinc-600">┊</span>
+                <span class="uval">${(r.f1 ?? '')}</span>
+                <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${iconCopySvg}</button>
+              </div>
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <span class="pval">${(r.f2 ?? '')}</span>
+                <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${iconCopySvg}</button>
+              </div>
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <label class="switch">
+                <input type="checkbox" class="onlineToggle" ${r.online ? 'checked' : ''}>
+                <span class="slider"></span>
+              </label>
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <label class="switch">
+                  <input type="checkbox" class="flagToggle" ${r.flag ? 'checked' : ''}>
+                  <span class="slider"></span>
+                </label>
+                <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700" maxlength="16" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
+              </div>
+            </td>
+            <td class="px-3 py-2 text-center"><input type="checkbox" class="olharToggle cbfx" ${r.olhar ? 'checked' : ''}/></td>
+            ${sCells}
+            <td class="px-3 py-2 whitespace-nowrap text-center">
+              <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
+            </td>
+          </tr>`;
+      }).join('');
     }
 
     async function loadPage(){
@@ -463,65 +607,7 @@
       pageLbl.textContent = `Página ${page}`;
     }
 
-    function formatDate(ts){
-      if(!ts) return '';
-      const d = new Date(ts);
-      if(isNaN(d.getTime())) return '';
-      const dd = String(d.getDate()).padStart(2,'0');
-      const mm = String(d.getMonth()+1).padStart(2,'0');
-      const hh = String(d.getHours()).padStart(2,'0');
-      const mi = String(d.getMinutes()).padStart(2,'0');
-      return `${dd}/${mm} ${hh}:${mi}`;
-    }
-
-    function renderRows(items){
-      rows.innerHTML = items.map(r => {
-        const sCells = [1,2,3,4,5,6,7].map(n =>
-          `<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/></td>`
-        ).join('');
-
-        return `
-          <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}">
-            <td class="px-3 py-2 whitespace-nowrap font-medium">
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-zinc-500">${formatDate(r.inserted_at)}</span>
-                <span class="text-zinc-600">┊</span>
-                <span class="uval">${(r.f1 ?? '')}</span>
-                <button class="iconbtn copyUserBtn" title="Copiar usuário">${iconCopySvg}</button>
-              </div>
-            </td>
-            <td class="px-3 py-2 whitespace-nowrap">
-              <div class="flex items-center gap-2">
-                <span class="pval">${(r.f2 ?? '')}</span>
-                <button class="iconbtn copyPassBtn" title="Copiar senha">${iconCopySvg}</button>
-              </div>
-            </td>
-            <td class="px-3 py-2 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
-            <td class="px-3 py-2 whitespace-nowrap">
-              <label class="switch">
-                <input type="checkbox" class="onlineToggle" data-prev="${r.online ? 'true' : 'false'}" ${r.online ? 'checked' : ''}>
-                <span class="slider"></span>
-              </label>
-            </td>
-            <td class="px-3 py-2 whitespace-nowrap">
-              <div class="flex items-center gap-2">
-                <label class="switch">
-                  <input type="checkbox" class="flagToggle" data-prev="${r.flag ? 'true' : 'false'}" ${r.flag ? 'checked' : ''}>
-                  <span class="slider"></span>
-                </label>
-                <input class="tagInput tagbox rounded border border-zinc-800 bg-zinc-950 px-2 py-1 outline-none focus:ring-2 focus:ring-zinc-700" maxlength="16" value="${r.tag4 ? r.tag4 : ''}" placeholder="TAG">
-              </div>
-            </td>
-            <td class="px-3 py-2 text-center"><input type="checkbox" class="olharToggle cbfx" ${r.olhar ? 'checked' : ''}/></td>
-            ${sCells}
-            <td class="px-3 py-2 whitespace-nowrap text-center">
-              <button class="delBtn ml-2 px-2 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 transition">Excluir</button>
-            </td>
-          </tr>`;
-      }).join('');
-    }
-
-    // ===== MENU "RECENTES" (CORRIGIDO) =====
+    // ---------- MENU "RECENTES" ----------
     function closeRecentMenu(){ recentMenu?.classList.add('hidden'); }
 
     recentBtn?.addEventListener('click', (e)=>{
@@ -545,23 +631,78 @@
 
       closeRecentMenu();
       await loadPage();
-      await loadUserEditsPie();
+      scheduleRefreshAll(0);
     });
 
     document.addEventListener('click', (e)=>{
       if(!recentMenu) return;
       if(recentMenu.classList.contains('hidden')) return;
-      // fecha se clicar fora do botão/menu
       if(!recentMenu.contains(e.target) && !recentBtn.contains(e.target)) closeRecentMenu();
     });
 
-    // Botões básicos
-    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); await loadUserEditsPie(); });
+    // ---------- AÇÕES / EVENT DELEGATION ----------
+    rows.addEventListener('click', async (e)=>{
+      const copyBtn = e.target.closest('.copyUserBtn, .copyPassBtn');
+      if(copyBtn){
+        const txt = copyBtn.getAttribute('data-copy') || '';
+        if(txt) navigator.clipboard?.writeText(txt);
+        return;
+      }
+    });
+
+    rows.addEventListener('change', async (e)=>{
+      const tr = e.target.closest('tr[data-id]');
+      if(!tr) return;
+      const id = tr.getAttribute('data-id');
+
+      const isOnline = e.target.classList.contains('onlineToggle');
+      const isFlag = e.target.classList.contains('flagToggle');
+      const isOlhar = e.target.classList.contains('olharToggle');
+      const isS = e.target.classList.contains('sChk');
+      const isTag = e.target.classList.contains('tagInput');
+
+      // TAG: atualiza no blur (para não spammar)
+      if(isTag) return;
+
+      let patch = null;
+      if(isOnline) patch = { online: e.target.checked };
+      else if(isFlag) patch = { flag: e.target.checked };
+      else if(isOlhar) patch = { olhar: e.target.checked };
+      else if(isS){
+        const n = e.target.getAttribute('data-s');
+        patch = { ['s'+n]: e.target.checked };
+      }
+
+      if(!patch) return;
+
+      const { error } = await supabase.from(TABLE).update(patch).eq('id', id);
+      if(error) console.warn('update error:', error.message);
+
+      // Atualiza gráficos (entra/sai do pie automaticamente)
+      scheduleRefreshAll(150);
+    });
+
+    rows.addEventListener('focusout', async (e)=>{
+      const input = e.target.closest('.tagInput');
+      if(!input) return;
+      const tr = input.closest('tr[data-id]');
+      if(!tr) return;
+      const id = tr.getAttribute('data-id');
+      const val = (input.value || '').trim();
+
+      const { error } = await supabase.from(TABLE).update({ tag4: val || null }).eq('id', id);
+      if(error) console.warn('tag update error:', error.message);
+
+      scheduleRefreshAll(150);
+    });
+
+    // ---------- PAGINAÇÃO ----------
+    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); scheduleRefreshAll(0); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
 
-    // SORT (mantive)
+    // ---------- SORT ----------
     thWcoin.addEventListener('click', ()=>{
       if(sort.field !== 'wcoin_int'){ sort = { field:'wcoin_int', asc:false }; } else { sort.asc = !sort.asc; }
       hintW.textContent = sort.field==='wcoin_int' ? (sort.asc?'↑':'↓') : '⇅';
@@ -587,13 +728,15 @@
       page = 1; loadPage();
     });
 
-    // REALTIME (opcional)
+    // ---------- REALTIME: quando marcar/desmarcar, atualiza pies ----------
     try{
-      supabase.channel('realtime:webzen_cache_raw')
-        .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, async ()=>{ if(page===1){ await loadPage(); } await loadCards(); })
-        .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, async ()=>{ await loadCards(); })
+      supabase.channel('realtime:webzen_cache_raw_ui')
+        .on('postgres_changes', { event:'UPDATE', schema:'public', table: TABLE }, () => scheduleRefreshAll(250))
+        .on('postgres_changes', { event:'INSERT', schema:'public', table: TABLE }, () => scheduleRefreshAll(250))
         .subscribe();
-    }catch(err){ console.warn('Realtime indisponível:', err); }
+    }catch(err){
+      console.warn('Realtime indisponível:', err);
+    }
   </script>
 </body>
 </html>
