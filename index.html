@@ -295,6 +295,9 @@
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
     const ICON_COPY_SVG = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
+    const ICON_KIN_SVG = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+    const ICON_SPIN_SVG = '<svg class="icon animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+
 
     // ========= CONFIG =========
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
@@ -635,7 +638,7 @@ function buildKinOrClause(tokens){
       // Fechar se já estiver aberto
       if(next && next.classList.contains('kinshipRow') && next.getAttribute('data-parent') === parentId){
         next.remove();
-        if(btn){ btn.dataset.open = '0'; btn.classList.remove('loading'); btn.innerHTML = iconKinSvg; }
+        if(btn){ btn.dataset.open = '0'; btn.classList.remove('loading'); btn.innerHTML = ICON_KIN_SVG; }
         return;
       }
 
@@ -646,7 +649,7 @@ function buildKinOrClause(tokens){
       if(btn){
         btn.dataset.open = '1';
         btn.classList.add('loading');
-        btn.innerHTML = iconSpinSvg;
+        btn.innerHTML = ICON_SPIN_SVG;
       }
 
       const holder = document.createElement('tr');
@@ -668,7 +671,7 @@ function buildKinOrClause(tokens){
 
       const { items, tokens } = await fetchKinshipForRow(parent);
 
-      if(btn){ btn.classList.remove('loading'); btn.innerHTML = iconKinSvg; }
+      if(btn){ btn.classList.remove('loading'); btn.innerHTML = ICON_KIN_SVG; }
 
       holder.innerHTML = `
         <td colspan="${kinColspan()}" class="px-3 py-3 bg-zinc-950/60 rounded-b-2xl">
@@ -1016,8 +1019,8 @@ function buildKinOrClause(tokens){
     // ========= TABELA =========
     // ---------- ÍCONES (reuso em tabela e parentesco) ----------
     function renderRows(items){
-      const iconKinSvg = '<svg class=\"icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M21 21l-4.3-4.3\"/></svg>';
-      const iconSpinSvg = '<svg class="icon mh-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 3v6h-6"/></svg>';
+      const ICON_KIN_SVG = '<svg class=\"icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M21 21l-4.3-4.3\"/></svg>';
+      const ICON_SPIN_SVG = '<svg class="icon mh-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 3v6h-6"/></svg>';
 
       
       rowsEl.innerHTML = (items || []).map(r => {
@@ -1039,7 +1042,7 @@ function buildKinOrClause(tokens){
               <div class="flex items-center gap-2">
                 <span class="text-xs text-zinc-500">${formatDate(r.inserted_at)}</span>
                 
-                <button class="iconbtn kinBtn" data-open="0" title="Parentesco" data-kin="1">${iconKinSvg}</button>
+                <button class="iconbtn kinBtn" data-open="0" title="Parentesco" data-kin="1">${ICON_KIN_SVG}</button>
 <span class="text-zinc-600">┊</span>
                 <span class="uval">${(r.f1 ?? '')}</span>
                 <button class="iconbtn copyBtn" title="Copiar usuário" data-copy="${encodeURIComponent(r.f1 ?? '')}">${ICON_COPY_SVG}</button>
