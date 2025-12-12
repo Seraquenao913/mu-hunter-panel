@@ -140,9 +140,7 @@
         <button id="loginBtn" class="w-full py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">Entrar</button>
         <p id="authMsg" class="text-sm text-red-400 hidden"></p>
       </div>
-        </div>
-  </div>
-</section>
+        </section>
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
@@ -270,7 +268,14 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage,
+      }
+    });
     window.supabase = supabase;
 
     // Ícone de cópia (definido antes de usar em renderRows)
@@ -336,7 +341,13 @@
       if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
       const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
       if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
+  
+    // Mantém UI sincronizada com mudanças de sessão (refresh, login, logout)
+    supabase.auth.onAuthStateChange(async (_event, _session) => {
       await updateSession();
+    });
+
+    await updateSession();
     });
 
     logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
@@ -438,6 +449,8 @@
           }]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               display: true,
@@ -608,6 +621,7 @@
       const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
       el.dataset.prev = next ? 'true':'false';
+      await loadUserEditsPie();
       if(sort.field === 'flag'){ await loadPage(); }
     });
 
@@ -644,7 +658,8 @@
       const v = (el.value || '').toUpperCase().slice(0,16); el.value = v;
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
-      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); return; }
+      await loadUserEditsPie();
     }, true);
     rows.addEventListener('keydown', (ev)=>{
       const el = ev.target; if(!el.classList.contains('tagInput')) return;
