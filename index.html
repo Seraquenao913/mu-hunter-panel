@@ -97,7 +97,17 @@
     .chart-legend-color{
       width:28px;height:8px;border-radius:2px;border:2px solid #000;flex-shrink:0;
     }
-  </style>
+  
+    /* ===== Kin button states + spinner + highlights ===== */
+    .kinBtn{ transition: background-color .18s ease, transform .12s ease; }
+    .kinBtn[data-open="1"]{ background:#2563eb; }
+    .kinBtn.loading{ background:#16a34a; opacity: .95; }
+    .kinBtn.loading svg{ display:block; }
+    @keyframes mhspin{ to{ transform: rotate(360deg); } }
+    .mh-spin{ animation: mhspin .8s linear infinite; }
+    mark.mh-hl{ background: rgba(34,197,94,.20); color: #e4e4e7; padding: 0 .12rem; border-radius: .25rem; }
+
+</style>
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
@@ -411,23 +421,73 @@
     function normStr(s){
       return (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g,'');
     }
-    function buildTokensFrom(str){
-      const s = normStr(str);
-      const toks = [];
-      const pushTok = (t)=>{ if(t && t.length>=4 && !toks.includes(t)) toks.push(t); };
-      // prefer 5-char sequences, then 4-char
-      for(const L of [5,4]){
-        if(toks.length >= 6) break;
-        for(let i=0; i<=s.length-L && toks.length<6; i++){
-          const t = s.slice(i,i+L);
-          // skip all-same chars like '0000'
-          if(/^([a-z0-9])\1+$/.test(t)) continue;
-          pushTok(t);
+    function buildTokensFrom(...parts){
+      const pushUnique = (arr, t) => { if(t && !arr.includes(t)) arr.push(t); };
+
+      const tokens = [];
+      const takeWindows = (seq) => {
+        const s = seq;
+        const L = s.length;
+        const lens = [8,7,6]; // mais específico
+        for(const k of lens){
+          if(L < k) continue;
+          pushUnique(tokens, s.slice(0,k));
+          pushUnique(tokens, s.slice(Math.max(0, Math.floor((L-k)/2)), Math.max(0, Math.floor((L-k)/2))+k));
+          pushUnique(tokens, s.slice(L-k));
         }
+      };
+
+      const normParts = parts
+        .filter(Boolean)
+        .map(p => String(p).trim().toLowerCase())
+        .filter(Boolean);
+
+      // pega as maiores sequências alfanuméricas (evita tokens muito curtos)
+      const seqs = [];
+      for(const p of normParts){
+        const found = (p.match(/[a-z0-9]{6,}/g) || []);
+        for(const s of found) seqs.push(s);
+      }
+
+      // prioriza as maiores (mais fortes)
+      seqs.sort((a,b)=> b.length - a.length);
+
+      // usa poucas sequências (reduz ruído)
+      for(const s of seqs.slice(0, 4)){
+        takeWindows(s);
+        if(tokens.length >= 8) break;
+      }
+
+      return tokens.slice(0, 8);
+    }
       }
       return toks;
     }
-    function buildKinOrClause(tokens){
+    
+    function escapeHtml(str){
+      return String(str ?? '').replace(/[&<>"']/g, (ch)=>({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[ch]));
+    }
+    function highlightText(val, tokens){
+      const safe = escapeHtml(val);
+      const toks = (tokens || []).slice().sort((a,b)=> b.length - a.length);
+      const low = safe.toLowerCase();
+      for(const t of toks){
+        const tl = String(t).toLowerCase();
+        if(tl.length < 6) continue;
+        const i = low.indexOf(tl);
+        if(i >= 0){
+          const before = safe.slice(0,i);
+          const mid = safe.slice(i, i+tl.length);
+          const after = safe.slice(i+tl.length);
+          return `${before}<mark class="mh-hl">${mid}</mark>${after}`;
+        }
+      }
+      return safe;
+    }
+
+function buildKinOrClause(tokens){
       const parts = [];
       (tokens || []).forEach(t=>{
         parts.push(`f1.ilike.%${t}%`);
@@ -440,7 +500,7 @@
       return 14;
     }
 
-    function renderKinTable(items){
+    function renderKinTable(items, tokens){
       const smallHead = `
         <div class="text-xs text-zinc-400 mb-2 flex items-center justify-between">
           <span>Parentesco (login/senha parecidos)</span>
@@ -485,14 +545,14 @@
                     <div class="flex items-center gap-2">
                       <span class="text-[10px] text-zinc-500">${formatDate(r.inserted_at)}</span>
                       <span class="text-zinc-600">┊</span>
-                      <span class="uval">${(r.f1 ?? '')}</span>
-                      <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${ICON_COPY_SVG}</button>
+                      <span class="uval">${highlightText(r.f1 ?? '', tokens)}</span>
+                      <button class="iconbtn copyUserBtn" title="Copiar usuário" data-copy="${highlightText(r.f1 ?? '', tokens)}">${ICON_COPY_SVG}</button>
                     </div>
                   </td>
                   <td class="px-2 py-1 whitespace-nowrap">
                     <div class="flex items-center gap-2">
-                      <span class="pval">${(r.f2 ?? '')}</span>
-                      <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${(r.f2 ?? '')}">${ICON_COPY_SVG}</button>
+                      <span class="pval">${highlightText(r.f2 ?? '', tokens)}</span>
+                      <button class="iconbtn copyPassBtn" title="Copiar senha" data-copy="${highlightText(r.f2 ?? '', tokens)}">${ICON_COPY_SVG}</button>
                     </div>
                   </td>
                   <td class="px-2 py-1 whitespace-nowrap">${(r.wcoin_int ?? 0)}</td>
@@ -526,44 +586,71 @@
     }
 
     async function fetchKinshipForRow(parent){
-      const parentId = parent.id;
-      const tokens = Array.from(new Set([
-        ...buildTokensFrom(parent.f1),
-        ...buildTokensFrom(parent.f2),
-      ])).slice(0,6);
-
-      if(tokens.length === 0) return [];
+      // Gera poucos tokens (mais fortes) para reduzir "parentesco distante"
+      const tokens = buildTokensFrom(parent.f1 || '', parent.f2 || '');
+      if(!tokens.length) return { items: [], tokens: [] };
 
       const orClause = buildKinOrClause(tokens);
-      if(!orClause) return [];
 
+      // busca moderada (não traz o mundo inteiro)
       let q = supabase.from(TABLE)
         .select('id, f1, f2, f3, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar, inserted_at')
         .or(orClause)
-        .neq('id', parentId)
-        .limit(50)
-        .order('inserted_at', { ascending:false });
-
-      // mantém filtros globais (valid/timeRange), mas NÃO usa a busca atual (senão corta demais)
-      const cutoff = rangeCutoffISO(timeRange?.value || 'all');
-      if(cutoff) q = q.gte('inserted_at', cutoff);
-      if (validFilter.value === 'yes') q = q.eq('f3', 'valid');
+        .neq('id', parent.id)
+        .limit(60);
 
       const { data, error } = await q;
-      if(error){ console.warn('kinship error:', error.message); return []; }
-      return data || [];
+      if(error){
+        console.warn('kinship error:', error.message);
+        return { items: [], tokens };
+      }
+
+      // Filtra localmente por força do match:
+      // - pelo menos 2 tokens batendo, OU 1 token bem longo (>=8)
+      const toks = tokens.slice();
+      const minStrong = toks.some(t => t.length >= 8);
+
+      const items = (data || []).filter(r=>{
+        const s1 = String(r.f1 || '').toLowerCase();
+        const s2 = String(r.f2 || '').toLowerCase();
+        let hits = 0;
+        let bestLen = 0;
+        for(const t of toks){
+          const tl = t.toLowerCase();
+          if(s1.includes(tl) || s2.includes(tl)){
+            hits++;
+            if(t.length > bestLen) bestLen = t.length;
+          }
+        }
+        if(hits >= 2) return true;
+        if(bestLen >= 8) return true;
+        return false;
+      }).slice(0, 30);
+
+      return { items, tokens };
     }
 
     async function toggleKinshipRow(parentTr){
       const parentId = parentTr.getAttribute('data-id');
+      const btn = parentTr.querySelector('.kinBtn');
       const next = parentTr.nextElementSibling;
+
+      // Fechar se já estiver aberto
       if(next && next.classList.contains('kinshipRow') && next.getAttribute('data-parent') === parentId){
         next.remove();
+        if(btn){ btn.dataset.open = '0'; btn.classList.remove('loading'); btn.innerHTML = iconKinSvg; }
         return;
       }
 
       // remove qualquer parentesco aberto logo abaixo deste
       if(next && next.classList.contains('kinshipRow')) next.remove();
+
+      // Marca como aberto + loading
+      if(btn){
+        btn.dataset.open = '1';
+        btn.classList.add('loading');
+        btn.innerHTML = iconSpinSvg;
+      }
 
       const holder = document.createElement('tr');
       holder.className = 'kinshipRow';
@@ -582,11 +669,13 @@
         f2: parentTr.querySelector('.pval')?.textContent || '',
       };
 
-      const items = await fetchKinshipForRow(parent);
+      const { items, tokens } = await fetchKinshipForRow(parent);
+
+      if(btn){ btn.classList.remove('loading'); btn.innerHTML = iconKinSvg; }
 
       holder.innerHTML = `
         <td colspan="${kinColspan()}" class="px-3 py-3 bg-zinc-950/60 rounded-b-2xl">
-          ${items.length ? renderKinTable(items) : '<div class="text-sm text-zinc-500">Nenhum parentesco encontrado.</div>'}
+          ${items.length ? renderKinTable(items, tokens) : '<div class="text-sm text-zinc-500">Nenhum parentesco encontrado.</div>'}
         </td>
       `;
     }
@@ -931,7 +1020,9 @@
     // ---------- ÍCONES (reuso em tabela e parentesco) ----------
     function renderRows(items){
       const iconKinSvg = '<svg class=\"icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M21 21l-4.3-4.3\"/></svg>';
+      const iconSpinSvg = '<svg class="icon mh-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 3v6h-6"/></svg>';
 
+      
       rowsEl.innerHTML = (items || []).map(r => {
         const sCells = [1,2,3,4,5,6,7].map(n =>
           `<td class="px-3 py-2 text-center"><input type="checkbox" class="sChk cbfx" data-s="${n}" ${r['s'+n] ? 'checked' : ''}/></td>`
@@ -951,7 +1042,7 @@
               <div class="flex items-center gap-2">
                 <span class="text-xs text-zinc-500">${formatDate(r.inserted_at)}</span>
                 
-                <button class="iconbtn kinBtn" title="Parentesco" data-kin="1">${iconKinSvg}</button>
+                <button class="iconbtn kinBtn" data-open="0" title="Parentesco" data-kin="1">${iconKinSvg}</button>
 <span class="text-zinc-600">┊</span>
                 <span class="uval">${(r.f1 ?? '')}</span>
                 <button class="iconbtn copyBtn" title="Copiar usuário" data-copy="${(r.f1 ?? '')}">${ICON_COPY_SVG}</button>
@@ -1044,11 +1135,26 @@
 
     // ========= AÇÕES (delegação) =========
     rowsEl.addEventListener('click', async (e)=>{
-      // Copiar
-      const copyBtn = e.target.closest('.copyUserBtn, .copyPassBtn');
+      // Copiar (tabela principal + tabela de parentesco)
+      const copyBtn = e.target.closest('.copyBtn, .copyUserBtn, .copyPassBtn');
       if(copyBtn){
+        e.preventDefault();
+        e.stopPropagation();
         const txt = copyBtn.getAttribute('data-copy') || '';
-        if(txt) navigator.clipboard?.writeText(txt);
+        if(!txt) return;
+        try{
+          await navigator.clipboard.writeText(txt);
+        }catch(_err){
+          // fallback (caso clipboard API esteja bloqueada)
+          const ta = document.createElement('textarea');
+          ta.value = txt;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand('copy'); }catch(_e){}
+          ta.remove();
+        }
         return;
       }
 
