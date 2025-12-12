@@ -18,8 +18,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-  .sidePie{position:fixed;left:18px;top:120px;width:240px;z-index:20;}
-  @media(max-width:1024px){.sidePie{position:static;width:100%;top:auto;left:auto;}}
+
+  /* Pie fora do corpo (gutter esquerda) */
+  .sidePie{position:fixed;left:18px;top:120px;width:240px;z-index:30;}
+  .sidePie .pieBox{height:160px;}
+  @media(max-width:1024px){
+    .sidePie{position:static;width:100%;left:auto;top:auto;margin-bottom:12px;}
+  }
+  /* Corpo central com espaço pra sidebar em telas grandes */
   .mainWrap{max-width:80rem;margin:0 auto;padding:0 1rem;}
   @media(min-width:1024px){.mainWrap{padding-left:280px;}}
 
@@ -170,42 +176,43 @@
         </div>
       </div>
 
-      <!-- Cards + Gráfico -->
-      <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
-        <!-- Gráfico de pizza à esquerda -->
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-2 flex flex-col">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
-            <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
-          </div>
-          <div class="flex-1">
-            <canvas id="userEditsPie" class="w-full h-56"></canvas>
-          </div>
-          <p class="mt-2 text-xs text-zinc-500">
-            Cada fatia mostra quantas linhas cada login alterou (<code>updated_by</code>).
-          </p>
-        </div>
+      <!-- Layout: gráfico fora do corpo + corpo centralizado -->
+<aside class="sidePie">
+  <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
+      <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
+    </div>
+    <div class="pieBox">
+      <canvas id="userEditsPie" class="w-full h-full"></canvas>
+    </div>
+    <p class="mt-2 text-xs text-zinc-500">
+      Cada fatia mostra quantas <b>linhas marcadas</b> estão atribuídas ao usuário (<code>marked_by</code>).
+    </p>
+  </div>
+</aside>
 
-        <!-- Cards à direita -->
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-          <div class="text-sm text-zinc-400">Total filtrado</div>
-          <div id="cardTotal" class="text-2xl font-bold">0</div>
-        </div>
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-          <div class="text-sm text-zinc-400">Online (ligado)</div>
-          <div id="cardOnline" class="text-2xl font-bold">0</div>
-        </div>
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-          <div class="text-sm text-zinc-400">Válidas</div>
-          <div id="cardValid" class="text-2xl font-bold">0</div>
-        </div>
-        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
-          <div class="text-sm text-zinc-400">Soma WCoin</div>
-          <div id="cardWSum" class="text-2xl font-bold">0</div>
-        </div>
-      </div>
+<div class="mainWrap">
+  <div class="grid md:grid-cols-4 gap-3 mb-4 items-stretch">
+    <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+      <div class="text-sm text-zinc-400">Total filtrado</div>
+      <div id="cardTotal" class="text-2xl font-bold">0</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+      <div class="text-sm text-zinc-400">Online (ligado)</div>
+      <div id="cardOnline" class="text-2xl font-bold">0</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+      <div class="text-sm text-zinc-400">Válidas</div>
+      <div id="cardValid" class="text-2xl font-bold">0</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
+      <div class="text-sm text-zinc-400">Soma WCoin</div>
+      <div id="cardWSum" class="text-2xl font-bold">0</div>
+    </div>
+  </div>
 
-      <!-- Tabela -->
+<!-- Tabela -->
       <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
         <table class="min-w-full text-sm">
           <thead class="bg-zinc-900 border-b border-zinc-800">
@@ -267,7 +274,14 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage,
+      }
+    });
     window.supabase = supabase;
 
     // Ícone de cópia (definido antes de usar em renderRows)
@@ -351,6 +365,9 @@
       const valid = validFilter.value;
 
       // Busca normal
+      const cutoff = rangeCutoffISO(timeRange?.value || 'all');
+      if (cutoff) q = q.gte('inserted_at', cutoff);
+
       if (s) {
         q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`);
       }
@@ -427,7 +444,8 @@
         userEditsChart.destroy();
       }
 
-      userEditsChart = new Chart(ctx, {
+      if (userEditsChart) { try { userEditsChart.destroy(); } catch(e){} }
+        userEditsChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels,
@@ -436,6 +454,8 @@
           }]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
               display: true,
@@ -458,6 +478,7 @@
       const from = (page-1)*limit; const to = from + limit - 1;
 
       await loadCards();
+    await loadUserEditsPie();
 
       let q = baseSelect(); q = applyFilters(q); q = applySort(q); q = q.range(from, to);
       const { data, error } = await q;
