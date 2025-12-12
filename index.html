@@ -140,30 +140,10 @@
         <button id="loginBtn" class="w-full py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition">Entrar</button>
         <p id="authMsg" class="text-sm text-red-400 hidden"></p>
       </div>
-        </section>
+    </section>
 
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
-  <div class="max-w-7xl mx-auto px-4">
-  <div class="flex flex-col md:flex-row gap-4 items-start">
-
-    <aside class="md:w-64 shrink-0 space-y-4">
-      <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
-          <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
-        </div>
-        <div class="flex-1" style="height:150px;">
-          <canvas id="userEditsPie" class="w-full"></canvas>
-        </div>
-        <p class="mt-2 text-xs text-zinc-500">
-          Mostra quantas linhas você deixou marcadas (online/itens/tag/rapelado/s1–s7).
-        </p>
-      </div>
-    </aside>
-
-    <div class="flex-1">
-
       <!-- Filtros -->
       <div class="grid md:grid-cols-4 gap-3 mb-4">
         <div class="col-span-2">
@@ -188,7 +168,20 @@
       <!-- Cards + Gráfico -->
       <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
         <!-- Gráfico de pizza à esquerda -->
-<!-- Cards à direita -->
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-2 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
+            <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
+          </div>
+          <div class="flex-1">
+            <canvas id="userEditsPie" class="w-full h-56"></canvas>
+          </div>
+          <p class="mt-2 text-xs text-zinc-500">
+            Cada fatia mostra quantas linhas cada login alterou (<code>updated_by</code>).
+          </p>
+        </div>
+
+        <!-- Cards à direita -->
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
           <div class="text-sm text-zinc-400">Total filtrado</div>
           <div id="cardTotal" class="text-2xl font-bold">0</div>
@@ -269,14 +262,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage,
-      }
-    });
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.supabase = supabase;
 
     // Ícone de cópia (definido antes de usar em renderRows)
@@ -332,7 +318,7 @@
       logoutBtn.classList.toggle('hidden', !logged);
       if (logged) {
         await loadPage();
-        await loadUserEditsPie();
+        schedulePieRefresh();
       }
     }
 
@@ -342,13 +328,7 @@
       if(!e || !p){ authMsg.textContent='Preencha email e senha.'; authMsg.classList.remove('hidden'); return; }
       const { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
       if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
-  
-    // Mantém UI sincronizada com mudanças de sessão (refresh, login, logout)
-    supabase.auth.onAuthStateChange(async (_event, _session) => {
       await updateSession();
-    });
-
-    await updateSession();
     });
 
     logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
@@ -450,8 +430,6 @@
           }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
           plugins: {
             legend: {
               display: true,
@@ -529,14 +507,14 @@
               '<div class="flex items-center gap-2">'+
                 '<span class="text-xs text-zinc-500">'+formatDate(r.inserted_at)+'</span>'+
                 '<span class="text-zinc-600">┊</span>'+
-                '<span class="uval">'+(r.f1 ?? '')+'</span>'+
+                '<span>'+(r.f1 ?? '')+'</span>'+
                 '<button class="iconbtn copyUserBtn" title="Copiar usuário">'+iconCopySvg+'</button>'+
               '</div>'+
             '</td>'+
 
             '<td class="px-3 py-2 whitespace-nowrap">'+
               '<div class="flex items-center gap-2">'+
-                '<span class="pval">'+(r.f2 ?? '')+'</span>'+
+                '<span>'+(r.f2 ?? '')+'</span>'+
                 '<button class="iconbtn copyPassBtn" title="Copiar senha">'+iconCopySvg+'</button>'+
               '</div>'+
             '</td>'+
@@ -579,7 +557,7 @@
     // Copiar usuário
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyUserBtn'); if(!btn) return;
-      const tr = btn.closest('tr'); const user = tr.querySelector('.uval')?.innerText.trim() || '';
+      const tr = btn.closest('tr'); const user = tr.querySelector('td:nth-child(1) span').innerText.trim();
       navigator.clipboard.writeText(user);
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
@@ -587,7 +565,7 @@
     // Copiar senha
     rows.addEventListener('click', (ev)=>{
       const btn = ev.target.closest('.copyPassBtn'); if(!btn) return;
-      const tr = btn.closest('tr'); const pass = tr.querySelector('.pval')?.innerText.trim() || '';
+      const tr = btn.closest('tr'); const pass = tr.querySelector('td:nth-child(2) span').innerText.trim();
       navigator.clipboard.writeText(pass);
       btn.classList.add('ring-2','ring-emerald-500'); setTimeout(()=> btn.classList.remove('ring-2','ring-emerald-500'), 600);
     });
@@ -608,7 +586,6 @@
       const { error } = await supabase.from(TABLE).update({ online: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Online: '+error.message); return; }
       el.dataset.prev = next ? 'true' : 'false';
-      await loadUserEditsPie();
       if(sort.field === 'online'){ await loadPage(); }
     });
 
@@ -622,7 +599,6 @@
       const { error } = await supabase.from(TABLE).update({ flag: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = prev; alert('Erro ao salvar Marcado: '+error.message); return; }
       el.dataset.prev = next ? 'true':'false';
-      await loadUserEditsPie();
       if(sort.field === 'flag'){ await loadPage(); }
     });
 
@@ -635,7 +611,6 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ olhar: next, updated_by }).eq('id', id);
       tr.classList.remove('saving'); if(error){ el.checked = !next; alert('Erro ao salvar Rapelado: '+error.message); return; }
-      await loadUserEditsPie();
     });
 
     // S1..S7
@@ -647,8 +622,7 @@
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const update = {}; update[key] = val; update['updated_by'] = updated_by;
       const { error } = await supabase.from(TABLE).update(update).eq('id', id);
-      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); return; }
-      await loadUserEditsPie();
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar '+key+': '+error.message); }
     });
 
     // TAG16
@@ -659,8 +633,7 @@
       const v = (el.value || '').toUpperCase().slice(0,16); el.value = v;
       const { data: { user } } = await supabase.auth.getUser(); const updated_by = user?.id || null;
       const { error } = await supabase.from(TABLE).update({ tag4: v || null, updated_by }).eq('id', id);
-      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); return; }
-      await loadUserEditsPie();
+      tr.classList.remove('saving'); if(error){ alert('Erro ao salvar TAG: '+error.message); }
     }, true);
     rows.addEventListener('keydown', (ev)=>{
       const el = ev.target; if(!el.classList.contains('tagInput')) return;
