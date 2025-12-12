@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Account Mu Hunter Panel</title>
-  <!-- MU_HUNTER_BUILD 2025-12-12 01:56:52 -->
+  <!-- MU_HUNTER_BUILD 2025-12-12 04:16:48 -->
 
   <script>document.documentElement.classList.add('dark');</script>
 
@@ -19,6 +19,50 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+
+  /* ===== Layout grid rígido e alinhado ao header ===== */
+  .appGrid{
+    --sidebar: 260px;
+    --gap: 18px;
+    display:grid;
+    grid-template-columns: var(--sidebar) 1fr;
+    gap: var(--gap);
+    align-items:start;
+    max-width: 92rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  @media(max-width:1024px){
+    .appGrid{ grid-template-columns: 1fr; }
+  }
+
+  /* Sidebar (gráfico) - fica "normal" até rolar, depois gruda */
+  .sidePie{ position: relative; width: 100%; }
+  .sidePie .stickyWrap{ position: sticky; top: 18px; }
+
+  /* Corpo alinhado exatamente ao header */
+  .mainBody{ min-width:0; }
+
+  /* Reduz espaço vazio abaixo da tabela */
+  .tableWrap{ margin-top: 12px; padding-bottom: 14px; }
+  .pagerWrap{ margin-top: 10px; }
+
+  /* Cards compactos */
+  .cardsGrid{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
+  @media(max-width:900px){ .cardsGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media(max-width:520px){ .cardsGrid{ grid-template-columns: 1fr; } }
+
+  /* Linha de filtros rígida */
+  .filtersRow{
+    display:grid;
+    grid-template-columns: 1.5fr 0.8fr 0.45fr auto;
+    gap: 12px;
+    align-items:end;
+  }
+  @media(max-width:1024px){ .filtersRow{ grid-template-columns: 1fr; } }
+
+  #recentMenu{ min-width: 12rem; }
+
 
   /* Pie fora do corpo (gutter esquerda) */
   .sidePie{position:fixed;left:18px;top:120px;width:240px;z-index:30;}
@@ -192,7 +236,10 @@
       </div>
 
 <!-- Gráfico fora do corpo -->
-<aside class="sidePie">
+
+
+      <div class="appGrid">
+  <aside class="sidePie"><div class="stickyWrap">
   <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow">
     <div class="flex items-center justify-between mb-2">
       <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
@@ -205,9 +252,9 @@
       Cada fatia mostra quantas <b>linhas marcadas</b> estão atribuídas ao usuário (<code>marked_by</code>).
     </p>
   </div>
-</aside>
+</div></aside>
+  <div class="mainBody">
 
-      <div class="mainWrap">
 <!-- Cards + Gráfico -->
       <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
 <!-- Cards à direita -->
@@ -229,7 +276,8 @@
         </div>
       </div>
 
-      <!-- Tabela -->
+      <div class="tableWrap">
+<!-- Tabela -->
       <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
         <table class="min-w-full text-sm">
           <thead class="bg-zinc-900 border-b border-zinc-800">
@@ -285,7 +333,6 @@
   </div>
 
   <script type="module">
-    console.log('MU_HUNTER_BOOT 2025-12-12T01:56:52');
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
@@ -376,9 +423,9 @@
       if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
       await updateSession();
 
-    // Mantém sessão sincronizada (login/logout/refresh)
     supabase.auth.onAuthStateChange(async ()=>{ await updateSession(); });
     });
+
     logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
     await updateSession();
 
@@ -733,6 +780,7 @@ if (recentBtn && recentMenu) {
   });
 }
 // AÇÕES
+    });
     applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); await loadUserEditsPie(); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
