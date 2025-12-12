@@ -136,7 +136,7 @@
         <!-- esquerda fora do corpo -->
         <div class="mh-side mh-side-left hidden xl:block">
 <div class="w-[320px] shrink-0 hidden xl:block">
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col mh-sidecard">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
                 <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
@@ -146,9 +146,7 @@
                   <canvas id="userEditsPie" width="260" height="260"></canvas>
                 </div>
               </div>
-              <p class="mt-2 text-xs text-zinc-500">
-              </p>
-            </div>
+              </div>
           </div>
         </div>
 
@@ -259,12 +257,13 @@
                 <option selected>50</option>
                 <option>100</option>
               </select>
+            </div>
           </main>
 
         <!-- direita fora do corpo -->
         <div class="mh-side mh-side-right hidden xl:block">
 <div class="w-[320px] shrink-0 hidden xl:block">
-            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col
+            <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow flex flex-col mh-sidecard">
               <div class="flex items-center justify-between mb-2">
                 <h3 class="text-sm text-zinc-300 font-semibold">Status das contas</h3>
                 <span class="text-xs text-zinc-500" id="statusTotalLbl">–</span>
