@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Account Mu Hunter Panel</title>
-<!-- MU_HUNTER_BUILD 2025-12-12 04:28:21 -->
 
   <script>document.documentElement.classList.add('dark');</script>
 
@@ -19,58 +18,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-
-  
-  /* ===== Layout grid rígido, alinhado ao header (login-safe) ===== */
-  .appGrid{
-    --sidebar: 260px;
-    --gap: 18px;
-    display:grid;
-    grid-template-columns: var(--sidebar) 1fr;
-    gap: var(--gap);
-    align-items:start;
-    max-width: 92rem;
-    margin: 0 auto;
-    padding: 0 1rem 14px 1rem;
-  }
-  @media(max-width:1024px){
-    .appGrid{ grid-template-columns: 1fr; }
-  }
-
-  /* Sidebar (gráfico) - gruda só ao rolar */
-  .sidePie{ position: relative; width: 100%; }
-  .sidePie .stickyWrap{ position: sticky; top: 18px; }
-  .pieBox{height:170px;}
-
-  .mainBody{ min-width:0; }
-
-  /* Reduz espaço vazio abaixo da tabela */
-  .tableWrap{ margin-top: 12px; padding-bottom: 10px; }
-  .pagerWrap{ margin-top: 10px; }
-
-  /* Cards compactos */
-  .cardsGrid{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
-  @media(max-width:900px){ .cardsGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
-  @media(max-width:520px){ .cardsGrid{ grid-template-columns: 1fr; } }
-
-
-  /* Sidebar (gráfico) sticky */
-  .sidePie{ position: relative; width: 100%; }
-  .sidePie .stickyWrap{ position: sticky; top: 18px; }
-
-  .mainBody{ min-width:0; }
-
-  .tableWrap{ margin-top: 12px; padding-bottom: 10px; }
-  .pagerWrap{ margin-top: 10px; }
-
-  /* Cards compactos */
-  .cardsGrid{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
-  @media(max-width:900px){ .cardsGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
-  @media(max-width:520px){ .cardsGrid{ grid-template-columns: 1fr; } }
-
-
-
-  
     .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
@@ -210,40 +157,27 @@
             <option value="yes">Sim</option>
           </select>
         </div>
-        <input type="hidden" id="timeRange" value="all"/>
         <div class="flex items-end gap-2">
           <button id="applyBtn" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition w-full">Aplicar</button>
-          <div class="relative w-full">
-  <button id="recentBtn" class="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-center gap-1 text-sm">
-    <span>Recentes</span><span class="text-xs">🕒</span>
-  </button>
-  <div id="recentMenu" class="hidden absolute right-0 mt-2 w-44 rounded-xl border border-zinc-800 bg-zinc-950 shadow-lg z-50 overflow-hidden">
-    <button class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="24h">Últimas 24h</button>
-    <button class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="7d">Últimos 7 dias</button>
-    <button class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="30d">Últimos 30 dias</button>
-    <button class="w-full text-left px-3 py-2 hover:bg-zinc-900 text-sm" data-range="all">Todo período</button>
-  </div>
-</div>
+          <button id="recentBtn" class="px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition w-full flex items-center justify-center gap-1 text-sm">
+            <span>Recentes</span><span class="text-xs">🕒</span>
+          </button>
         </div>
       </div>
 
-      <div class="appGrid">
-  <aside class="sidePie"><div class="stickyWrap"></div></aside>
-  <div class="mainBody">
-
-<!-- Cards -->
-      <div class="cardsGrid mb-4">
+      <!-- Cards + Gráfico -->
+      <div class="grid md:grid-cols-5 gap-3 mb-4 items-stretch">
         <!-- Gráfico de pizza à esquerda -->
         <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 shadow md:col-span-2 flex flex-col">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm text-zinc-300 font-semibold">Modificações por usuário</h3>
             <span class="text-xs text-zinc-500" id="pieTotalEditsLbl">–</span>
           </div>
-          <div class="pieBox">
-            <canvas id="userEditsPie" class="w-full h-full"></canvas>
+          <div class="flex-1">
+            <canvas id="userEditsPie" class="w-full h-56"></canvas>
           </div>
           <p class="mt-2 text-xs text-zinc-500">
-            Cada fatia mostra quantas linhas estão atribuídas ao usuário (<code>marked_by</code>).
+            Cada fatia mostra quantas linhas cada login alterou (<code>updated_by</code>).
           </p>
         </div>
 
@@ -266,8 +200,7 @@
         </div>
       </div>
 
-      <div class="tableWrap">
-<!-- Tabela -->
+      <!-- Tabela -->
       <div class="overflow-auto rounded-2xl shadow ring-1 ring-black/20">
         <table class="min-w-full text-sm">
           <thead class="bg-zinc-900 border-b border-zinc-800">
@@ -329,14 +262,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Y3l2b2J3Z2NkeXlwaGFmb2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MDIyMzQsImV4cCI6MjA3NzE3ODIzNH0.YTDIIZ5AzwyhDASO15vexglhvTX4ZMqoZksZh3PPEH8";
     const TABLE = "webzen_cache_raw";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage,
-      }
-    });
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.supabase = supabase;
 
     // Ícone de cópia (definido antes de usar em renderRows)
@@ -354,9 +280,7 @@
     const search = document.getElementById('search');
     const validFilter = document.getElementById('validFilter');
     const applyBtn = document.getElementById('applyBtn');
-    const timeRange = document.getElementById('timeRange');
     const recentBtn = document.getElementById('recentBtn');
-    const recentMenu = document.getElementById('recentMenu');
 
     const rows = document.getElementById('rows');
     const prevBtn = document.getElementById('prevBtn');
@@ -381,13 +305,6 @@
     const pieTotalEditsLbl = document.getElementById('pieTotalEditsLbl');
     let userEditsChart = null;
 
-    let pieTimer = null;
-    function schedulePieRefresh(){
-      if(pieTimer) clearTimeout(pieTimer);
-      pieTimer = setTimeout(()=>{ loadUserEditsPie(); }, 150);
-    }
-
-
     localStorage.setItem('theme','dark');
     let page = 1;
     let sort = { field: 'inserted_at', asc: false };
@@ -401,7 +318,7 @@
       logoutBtn.classList.toggle('hidden', !logged);
       if (logged) {
         await loadPage();
-        await loadUserEditsPie();
+        schedulePieRefresh();
       }
     }
 
@@ -418,15 +335,6 @@
     await updateSession();
 
     // SELECT/QUERY HELPERS
-function rangeCutoffISO(val){
-  const now = new Date();
-  if(val==='24h') now.setHours(now.getHours()-24);
-  else if(val==='7d') now.setDate(now.getDate()-7);
-  else if(val==='30d') now.setDate(now.getDate()-30);
-  else return null;
-  return now.toISOString();
-}
-
     function baseSelect(){
       return supabase.from(TABLE).select(
         'id, f1, f2, f3, f5, wcoin_int, online, s1, s2, s3, s4, s5, s6, s7, flag, tag4, olhar, inserted_at'
@@ -437,9 +345,6 @@ function rangeCutoffISO(val){
       const valid = validFilter.value;
 
       // Busca normal
-      const cutoff = rangeCutoffISO(timeRange?.value || 'all');
-      if (cutoff) q = q.gte('inserted_at', cutoff);
-
       if (s) {
         q = q.or(`f1.ilike.%${s}%,f2.ilike.%${s}%`);
       }
@@ -501,7 +406,7 @@ function rangeCutoffISO(val){
           userEditsChart.destroy();
           userEditsChart = null;
         }
-        pieTotalEditsLbl.textContent = '0 linhas';
+        pieTotalEditsLbl.textContent = '0 alterações';
         return;
       }
 
@@ -509,7 +414,7 @@ function rangeCutoffISO(val){
       const values = data.map(r => Number(r.total_edits || r.total || 0));
       const total = values.reduce((a, b) => a + b, 0);
 
-      pieTotalEditsLbl.textContent = `${total} linhas`;
+      pieTotalEditsLbl.textContent = `${total} alterações`;
 
       const ctx = userEditsPieCanvas.getContext('2d');
       if (userEditsChart) {
@@ -736,38 +641,12 @@ function rangeCutoffISO(val){
     });
 
     // AÇÕES
-// AÇÕES (Recentes com seletor)
-function closeRecentMenu(){ if(recentMenu) recentMenu.classList.add('hidden'); }
-
-if (recentBtn && recentMenu) {
-  recentBtn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    recentMenu.classList.toggle('hidden');
-  });
-
-  recentMenu.addEventListener('click', async (e)=>{
-    const btn = e.target.closest('button[data-range]');
-    if(!btn) return;
-    const range = btn.getAttribute('data-range');
-    if(timeRange) timeRange.value = range;
-
-    // Ordena por mais recente
-    sort = { field: 'inserted_at', asc: false };
-    hintW.textContent='⇅'; hintO.textContent='⇅'; hintF.textContent='⇅'; hintOlhar.textContent='⇅';
-    page = 1;
-
-    closeRecentMenu();
-    await loadPage();
-    await loadUserEditsPie();
-  });
-
-  document.addEventListener('click', (e)=>{
-    if(!recentMenu.contains(e.target) && e.target !== recentBtn) closeRecentMenu();
-  });
-}
-
-    });
-    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); await loadUserEditsPie(); });
+    recentBtn.addEventListener('click', ()=>{
+      sort = { field: 'inserted_at', asc: false };
+      hintW.textContent='⇅'; hintO.textContent='⇅'; hintF.textContent='⇅'; hintOlhar.textContent='⇅';
+      page = 1;
+      loadPage();
+    applyBtn.addEventListener('click', ()=>{ page = 1; loadPage(); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
