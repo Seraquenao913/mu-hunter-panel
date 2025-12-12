@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Account Mu Hunter Panel</title>
-  <!-- MU_HUNTER_BUILD 2025-12-12 01:40:43 -->
+  <!-- MU_HUNTER_BUILD 2025-12-12 01:56:52 -->
 
   <script>document.documentElement.classList.add('dark');</script>
 
@@ -285,6 +285,7 @@
   </div>
 
   <script type="module">
+    console.log('MU_HUNTER_BOOT 2025-12-12T01:56:52');
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
     const SUPABASE_URL = "https://uwcyvobwgcdyyphafofy.supabase.co";
@@ -375,9 +376,9 @@
       if(error){ authMsg.textContent = error.message || 'Falha ao entrar.'; authMsg.classList.remove('hidden'); return; }
       await updateSession();
 
+    // Mantém sessão sincronizada (login/logout/refresh)
     supabase.auth.onAuthStateChange(async ()=>{ await updateSession(); });
     });
-
     logoutBtn.addEventListener('click', async ()=>{ await supabase.auth.signOut(); await updateSession(); });
     await updateSession();
 
@@ -732,7 +733,6 @@ if (recentBtn && recentMenu) {
   });
 }
 // AÇÕES
-    });
     applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); await loadUserEditsPie(); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
