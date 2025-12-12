@@ -89,7 +89,6 @@
     }
     .iconbtn:hover { background:#52525b; }
     .icon { width:16px; height:16px; display:block; }
-  
 
     /* ===== Ajustes finais (legendas dentro do card + tamanhos iguais) ===== */
     .mh-sidecard{min-height: 440px; padding-bottom: 1.25rem;}
@@ -129,7 +128,7 @@
       border: 2px solid #000; /* linha preta igual ao roxo */
       flex-shrink: 0;
     }
-</style>
+  </style>
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
@@ -387,7 +386,6 @@
     // cache do último status (para update otimista)
     let lastStatusReal = null;
 
-
     // ---------- ESTADO ----------
     let page = 1;
     let sort = { field: 'inserted_at', asc: false };
@@ -442,11 +440,8 @@
       return `${dd}/${mm} ${hh}:${mi}`;
     }
 
-
     // ---------- HELPERS (status otimista) ----------
-    function boolFromData(v){
-      return v === '1' || v === 'true' || v === true;
-    }
+    function boolFromData(v){ return v === '1' || v === 'true' || v === true; }
     function getRowStateFromTr(tr){
       const s = {
         f3: tr.getAttribute('data-f3') || '',
@@ -470,9 +465,7 @@
       tr.setAttribute('data-flag', st.flag ? '1':'0');
       tr.setAttribute('data-olhar', st.olhar ? '1':'0');
       tr.setAttribute('data-tag4', (st.tag4 || ''));
-      for(let i=1;i<=7;i++){
-        tr.setAttribute('data-s'+i, st['s'+i] ? '1':'0');
-      }
+      for(let i=1;i<=7;i++) tr.setAttribute('data-s'+i, st['s'+i] ? '1':'0');
     }
     function isValidasLimpas(st){
       const tagEmpty = !st.tag4 || String(st.tag4).trim().length === 0;
@@ -485,7 +478,6 @@
     function applyStatusToChart(real){
       if(!real) return;
 
-      // Visual: deixa "Válidas limpas" ~70% quando muito maior
       const otherSum = real.online + real.itens + real.rapelado;
       let validasVisual = real.validas;
       if (real.validas > 0 && otherSum > 0) {
@@ -513,41 +505,41 @@
       statusTotalLbl.textContent = `${totalReal.toLocaleString('pt-BR')} registros`;
       validasLimpasLbl.textContent = real.validas.toLocaleString('pt-BR');
 
+      const cfgAnim = { duration: 520, easing: 'easeOutQuart' };
+
       const ctx = statusPieCanvas.getContext('2d');
-      const cfg = {
-        type: 'pie',
-        data: { labels, datasets: [{ data: valuesVisual, backgroundColor: colors, borderColor:'#000', borderWidth:2 }] },
-        options: {
-          responsive:false,
-          maintainAspectRatio:false,
-          radius:'90%',
-          animation:{ duration:520, easing:'easeOutQuart' },
-          plugins:{
-            legend:{ display:false },
-            tooltip:{
-              callbacks:{
-                label:(tt)=>{
-                  const i = tt.dataIndex;
-                  const realVals = [real.online, real.itens, real.rapelado, real.validas];
-                  const v = realVals[i] || 0;
-                  return `${baseNames[i]}: ${v.toLocaleString('pt-BR')}`;
+      if(statusChart){
+        statusChart.data.labels = labels;
+        statusChart.data.datasets[0].data = [...valuesVisual];
+        statusChart.data.datasets[0].backgroundColor = colors;
+        statusChart.options.animation = cfgAnim;
+        statusChart.update(); // anima e redesenha
+      }else{
+        statusChart = new Chart(ctx, {
+          type: 'pie',
+          data: { labels, datasets: [{ data: valuesVisual, backgroundColor: colors, borderColor:'#000', borderWidth:2 }] },
+          options: {
+            responsive:false,
+            maintainAspectRatio:false,
+            radius:'90%',
+            animation: cfgAnim,
+            plugins:{
+              legend:{ display:false },
+              tooltip:{
+                callbacks:{
+                  label:(tt)=>{
+                    const i = tt.dataIndex;
+                    const realVals = [real.online, real.itens, real.rapelado, real.validas];
+                    const v = realVals[i] || 0;
+                    return `${baseNames[i]}: ${v.toLocaleString('pt-BR')}`;
+                  }
                 }
               }
             }
           }
-        }
-      };
-
-      if(statusChart){
-        statusChart.data.labels = cfg.data.labels;
-        statusChart.data.datasets[0].data = cfg.data.datasets[0].data;
-        statusChart.data.datasets[0].backgroundColor = cfg.data.datasets[0].backgroundColor;
-        statusChart.update();
-      }else{
-        statusChart = new Chart(ctx, cfg);
+        });
       }
 
-      // Legenda 2x2
       const legendEl = document.getElementById('statusLegend');
       if(legendEl){
         legendEl.innerHTML = '';
@@ -567,7 +559,6 @@
       if(!lastStatusReal) return;
       const before = getRowStateFromTr(tr);
       if(before.f3 !== 'valid') {
-        // status é calculado só para f3='valid' no SQL
         applyRowStateToTr(tr, { ...before, ...patch });
         return;
       }
@@ -585,7 +576,7 @@
       applyStatusToChart(lastStatusReal);
     }
 
-    // debounce
+    // ---------- REFRESH debounce (RPC sync) ----------
     let refreshTimer = null;
     function scheduleRefreshAll(ms=250){
       clearTimeout(refreshTimer);
@@ -644,101 +635,95 @@
       }
     }
 
-    
-// ---------- PIE ESQ (helpers) ----------
-function applyUserEditsFromRows(rowsArr){
-  const top = (rowsArr || []).slice().sort((a,b)=> (b.value||0)-(a.value||0)).slice(0,4);
-  const rawLabels = top.map(r => r.label);
-  const values = top.map(r => Number(r.value||0));
-  const total = (rowsArr || []).reduce((a,r)=> a + Number(r.value||0), 0);
-  pieTotalEditsLbl.textContent = `${total.toLocaleString('pt-BR')} alterações`;
+    // ---------- PIE ESQ (helpers) ----------
+    function applyUserEditsFromRows(rowsArr){
+      if (!userEditsPieCanvas) return;
+      const top = (rowsArr || []).slice().sort((a,b)=> (b.value||0)-(a.value||0)).slice(0,4);
+      const rawLabels = top.map(r => r.label);
+      const values = top.map(r => Number(r.value||0));
+      const total = (rowsArr || []).reduce((a,r)=> a + Number(r.value||0), 0);
+      pieTotalEditsLbl.textContent = `${total.toLocaleString('pt-BR')} alterações`;
 
-  const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
-  const ctx = userEditsPieCanvas.getContext('2d');
+      const colors = ['#38bdf8','#fb7185','#fb923c','#fbbf24'];
+      const ctx = userEditsPieCanvas.getContext('2d');
+      const labels = rawLabels.map((lab,i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`);
+      const cfgAnim = { duration: 520, easing: 'easeOutQuart' };
 
-  const labels = rawLabels.map((lab,i)=> `${lab} (${(values[i]||0).toLocaleString('pt-BR')})`);
-
-  const cfg = {
-    type: 'pie',
-    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#000000', borderWidth: 2 }] },
-    options: {
-      responsive: false,
-      maintainAspectRatio: false,
-      radius: '90%',
-      animation: { duration: 520, easing: 'easeOutQuart' },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (tt) => {
-              const v = values[tt.dataIndex] || 0;
-              const base = rawLabels[tt.dataIndex] || '';
-              return `${base}: ${v.toLocaleString('pt-BR')}`;
+      if (userEditsChart){
+        userEditsChart.data.labels = labels;
+        userEditsChart.data.datasets[0].data = [...values];
+        userEditsChart.data.datasets[0].backgroundColor = colors;
+        userEditsChart.options.animation = cfgAnim;
+        userEditsChart.update(); // anima e redesenha
+      } else {
+        userEditsChart = new Chart(ctx, {
+          type: 'pie',
+          data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor:'#000', borderWidth:2 }] },
+          options: {
+            responsive:false,
+            maintainAspectRatio:false,
+            radius:'90%',
+            animation: cfgAnim,
+            plugins:{
+              legend:{ display:false },
+              tooltip:{
+                callbacks:{
+                  label:(tt)=>{
+                    const v = values[tt.dataIndex] || 0;
+                    const base = rawLabels[tt.dataIndex] || '';
+                    return `${base}: ${v.toLocaleString('pt-BR')}`;
+                  }
+                }
+              }
             }
           }
-        }
+        });
+      }
+
+      const legendEl = document.getElementById('userLegend');
+      if (legendEl){
+        legendEl.innerHTML = '';
+        labels.forEach((lab, i)=>{
+          const item = document.createElement('div');
+          item.className = 'chart-legend-item';
+          item.innerHTML = `
+            <span class="chart-legend-color" style="background:${colors[i]};"></span>
+            <span class="truncate" title="${lab}">${lab}</span>
+          `;
+          legendEl.appendChild(item);
+        });
       }
     }
-  };
 
-  if (userEditsChart){
-    userEditsChart.data.labels = cfg.data.labels;
-    userEditsChart.data.datasets[0].data = cfg.data.datasets[0].data;
-    userEditsChart.data.datasets[0].backgroundColor = cfg.data.datasets[0].backgroundColor;
-    userEditsChart.options.animation = cfg.options.animation;
-    userEditsChart.update();
-  } else {
-    userEditsChart = new Chart(ctx, cfg);
-  }
+    function optimisticUserEditsBump(){
+      if (!currentUserEmail) return;
+      if (!Array.isArray(lastUserEditsRows)) return;
 
-  const legendEl = document.getElementById('userLegend');
-  if (legendEl){
-    legendEl.innerHTML = '';
-    cfg.data.labels.forEach((lab, i)=>{
-      const item = document.createElement('div');
-      item.className = 'chart-legend-item';
-      item.innerHTML = `
-        <span class="chart-legend-color" style="background:${colors[i]};"></span>
-        <span class="truncate" title="${lab}">${lab}</span>
-      `;
-      legendEl.appendChild(item);
-    });
-  }
-}
+      const rowsArr = lastUserEditsRows.slice();
+      const idx = rowsArr.findIndex(r => r.label === currentUserEmail);
+      if (idx >= 0) rowsArr[idx] = { ...rowsArr[idx], value: Number(rowsArr[idx].value||0) + 1 };
+      else rowsArr.push({ label: currentUserEmail, value: 1 });
 
-function optimisticUserEditsBump(){
-  // "Modificações por usuário" é contagem de updates; cada ação sua deve somar +1 para seu usuário.
-  if (!currentUserEmail) return;
-  if (!Array.isArray(lastUserEditsRows)) return;
+      lastUserEditsRows = rowsArr;
+      applyUserEditsFromRows(lastUserEditsRows);
+    }
 
-  const rowsArr = lastUserEditsRows.slice();
-  const idx = rowsArr.findIndex(r => r.label === currentUserEmail);
-  if (idx >= 0) rowsArr[idx] = { ...rowsArr[idx], value: Number(rowsArr[idx].value||0) + 1 };
-  else rowsArr.push({ label: currentUserEmail, value: 1 });
+    async function loadUserEditsPie(){
+      if (!userEditsPieCanvas) return;
 
-  lastUserEditsRows = rowsArr;
-  applyUserEditsFromRows(lastUserEditsRows);
-}
+      const { data, error } = await supabase.rpc('get_update_stats');
+      if (error) { console.warn('Erro get_update_stats:', error.message); return; }
 
+      const rowsArr = Array.isArray(data) ? data : [];
+      lastUserEditsRows = rowsArr.map(r => ({
+        label: (r.user_email || (r.user_id ?? 'sem email')),
+        value: Number(r.total_edits || r.total || 0)
+      }));
 
-// ---------- PIE ESQ ----------
-async function loadUserEditsPie(){
-  if (!userEditsPieCanvas) return;
+      applyUserEditsFromRows(lastUserEditsRows);
+    }
 
-  const { data, error } = await supabase.rpc('get_update_stats');
-  if (error) { console.warn('Erro get_update_stats:', error.message); return; }
-
-  const rowsArr = Array.isArray(data) ? data : [];
-  // Normaliza para {label,value}
-  lastUserEditsRows = rowsArr.map(r => ({
-    label: (r.user_email || (r.user_id ?? 'sem email')),
-    value: Number(r.total_edits || r.total || 0)
-  }));
-
-  applyUserEditsFromRows(lastUserEditsRows);
-}
-
-// ---------- PIE DIR ----------
+    // ---------- PIE DIR ----------
     async function loadStatusPie(){
       if (!statusPieCanvas) return;
       const { data, error } = await supabase.rpc('get_status_distribution');
@@ -753,7 +738,8 @@ async function loadUserEditsPie(){
       };
       applyStatusToChart(lastStatusReal);
     }
-// ---------- TABELA ----------
+
+    // ---------- TABELA ----------
     function renderRows(items){
       const iconCopySvg = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 
@@ -763,7 +749,11 @@ async function loadUserEditsPie(){
         ).join('');
 
         return `
-          <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}" data-f3="${(r.f3 ?? '')}" data-online="${r.online ? '1':'0'}" data-flag="${r.flag ? '1':'0'}" data-olhar="${r.olhar ? '1':'0'}" data-tag4="${(r.tag4 ?? '')}" data-s1="${r.s1 ? '1':'0'}" data-s2="${r.s2 ? '1':'0'}" data-s3="${r.s3 ? '1':'0'}" data-s4="${r.s4 ? '1':'0'}" data-s5="${r.s5 ? '1':'0'}" data-s6="${r.s6 ? '1':'0'}" data-s7="${r.s7 ? '1':'0'}">
+          <tr class="hover:bg-zinc-900/60 transition" data-id="${r.id}"
+              data-f3="${(r.f3 ?? '')}" data-online="${r.online ? '1':'0'}" data-flag="${r.flag ? '1':'0'}"
+              data-olhar="${r.olhar ? '1':'0'}" data-tag4="${(r.tag4 ?? '')}"
+              data-s1="${r.s1 ? '1':'0'}" data-s2="${r.s2 ? '1':'0'}" data-s3="${r.s3 ? '1':'0'}"
+              data-s4="${r.s4 ? '1':'0'}" data-s5="${r.s5 ? '1':'0'}" data-s6="${r.s6 ? '1':'0'}" data-s7="${r.s7 ? '1':'0'}">
             <td class="px-3 py-2 whitespace-nowrap font-medium">
               <div class="flex items-center gap-2">
                 <span class="text-xs text-zinc-500">${formatDate(r.inserted_at)}</span>
@@ -887,17 +877,17 @@ async function loadUserEditsPie(){
         const n = e.target.getAttribute('data-s');
         patch = { ['s'+n]: e.target.checked };
       }
-
       if(!patch) return;
 
-      // Atualização visual IMEDIATA (antes do roundtrip)
+      // ✅ Atualização visual IMEDIATA (gráfico roxo + azul)
+      optimisticStatusAdjust(tr, patch);
       optimisticUserEditsBump();
-      // statusPie (roxo) já tem ajuste otimista nesta versão
 
       const { error } = await supabase.from(TABLE).update(patch).eq('id', id);
       if(error) console.warn('update error:', error.message);
 
-      scheduleRefreshAll(150);
+      // Depois sincroniza com as RPCs (caso algum cálculo real seja diferente)
+      scheduleRefreshAll(200);
     });
 
     rows.addEventListener('focusout', async (e)=>{
@@ -908,17 +898,18 @@ async function loadUserEditsPie(){
       const id = tr.getAttribute('data-id');
       const val = (input.value || '').trim();
 
-      // Atualização visual IMEDIATA (tag também conta como modificação)
+      // ✅ Tag afeta "Válidas limpas" no roxo, então faz otimista também
+      optimisticStatusAdjust(tr, { tag4: val || '' });
       optimisticUserEditsBump();
 
       const { error } = await supabase.from(TABLE).update({ tag4: val || null }).eq('id', id);
       if(error) console.warn('tag update error:', error.message);
 
-      scheduleRefreshAll(150);
+      scheduleRefreshAll(200);
     });
 
     // ---------- PAGINAÇÃO ----------
-    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); await scheduleRefreshAll(0); });
+    applyBtn.addEventListener('click', async ()=>{ page = 1; await loadPage(); scheduleRefreshAll(0); });
     prevBtn.addEventListener('click', ()=>{ if(page>1){ page--; loadPage(); } });
     nextBtn.addEventListener('click', ()=>{ page++; loadPage(); });
     limitSel.addEventListener('change', ()=>{ page = 1; loadPage(); });
